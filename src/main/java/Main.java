@@ -51,6 +51,9 @@ public class Main {
             sb.append((char) buf[i]);
           }
         }
+        if (sb.length() > 0) {
+          commands.add(sb.toString());
+        }
         used += n;
         if (commands.get(0).equalsIgnoreCase("echo")) {
           String p = commands.get(1);
