@@ -1,9 +1,10 @@
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Main {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     // You can use print statements as follows for debugging, they'll be visible
     // when running tests.
     System.out.println("Logs from your program will appear here!");
@@ -30,5 +31,7 @@ public class Main {
         System.out.println("IOException: " + e.getMessage());
       }
     }
+    OutputStream outputStream = clientSocket.getOutputStream();
+    outputStream.write("+PONG\r\n".getBytes());
   }
 }
