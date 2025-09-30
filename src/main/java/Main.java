@@ -34,7 +34,7 @@ public class Main {
           break;
         }
         for (int i = used; i < used + n; i++) {
-          System.out.println(buf[i]);
+          System.out.println((char) buf[i]);
         }
         out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
         out.flush();
