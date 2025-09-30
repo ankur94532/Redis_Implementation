@@ -1,6 +1,9 @@
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
   public static void main(String[] args) throws IOException {
@@ -8,27 +11,29 @@ public class Main {
     int port = 6379;
     final ServerSocket serverSocket = new ServerSocket(port);
     serverSocket.setReuseAddress(true);
-    Thread thread = new Thread(() -> {
-      Socket clientSocket = null;
-      try {
-        clientSocket = serverSocket.accept();
-        while (true) {
-          byte[] input = new byte[1024];
-          clientSocket.getInputStream().read(input);
-          clientSocket.getOutputStream().write("+PONG\r\n".getBytes());
-        }
-      } catch (IOException e) {
-        System.out.println("IOException: " + e.getMessage());
-      } finally {
+    while (true) {
+      Socket clientSocket = serverSocket.accept();
+      new Thread(() -> {
         try {
-          if (clientSocket != null) {
-            clientSocket.close();
-          }
-          serverSocket.close();
+          handle(clientSocket);
         } catch (IOException e) {
-          System.out.println("IOException: " + e.getMessage());
         }
+      }).start();
+    }
+  }
+
+  static void handle(Socket client) throws IOException {
+    try {
+      InputStream in = client.getInputStream();
+      OutputStream out = client.getOutputStream();
+      byte[] buf = new byte[1024];
+      while (in.read(buf) != -1) {
+        out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
+        out.flush();
       }
-    });
+    } catch (IOException ignored) {
+    } finally {
+      client.close();
+    }
   }
 }
