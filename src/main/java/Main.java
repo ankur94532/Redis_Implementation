@@ -4,6 +4,8 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
   public static void main(String[] args) throws IOException {
@@ -33,11 +35,31 @@ public class Main {
         if (n == -1) {
           break;
         }
+        List<String> commands = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
         for (int i = used; i < used + n; i++) {
-          System.out.println((char) buf[i]);
+          if (buf[i] == '$') {
+            if (sb.length() > 0) {
+              commands.add(sb.toString());
+              sb.setLength(0);
+            }
+          }
+          if (buf[i] >= 65 && buf[i] <= 90) {
+            sb.append((char) buf[i]);
+          }
+          if (buf[i] >= 97 && buf[i] <= 122) {
+            sb.append((char) buf[i]);
+          }
         }
-        out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
-        out.flush();
+        used += n;
+        if (commands.get(0).equalsIgnoreCase("echo")) {
+          String p = commands.get(1);
+          out.write(("$" + p.length() + "\r\n").getBytes());
+          out.write(p.getBytes());
+          out.write("\r\n".getBytes());
+        } else if (commands.get(0).equalsIgnoreCase("ping")) {
+          out.write("PONG".getBytes());
+        }
       }
     } catch (IOException ignored) {
     } finally {
