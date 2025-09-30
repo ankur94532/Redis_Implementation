@@ -27,6 +27,7 @@ public class Main {
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[1024];
+      System.out.println(in.read(buf));
       while (in.read(buf) != -1) {
         out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
         out.flush();
