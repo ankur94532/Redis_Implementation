@@ -61,7 +61,7 @@ public class Main {
           out.write(p.getBytes());
           out.write("\r\n".getBytes());
         } else if (commands.get(0).equalsIgnoreCase("ping")) {
-          out.write("+PONG\\r\\n".getBytes());
+          out.write("+PONG\r\n".getBytes());
         }
       }
     } catch (IOException ignored) {
