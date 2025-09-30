@@ -26,9 +26,16 @@ public class Main {
     try {
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
-      byte[] buf = new byte[1024];
-      System.out.println(in.read(buf));
-      while (in.read(buf) != -1) {
+      byte[] buf = new byte[8192];
+      int used = 0;
+      while (true) {
+        int n = in.read(buf, used, buf.length - used);
+        if (n == -1) {
+          break;
+        }
+        for (int i = used; i < used + n; i++) {
+          System.out.println(buf[i]);
+        }
         out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
         out.flush();
       }
