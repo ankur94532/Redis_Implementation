@@ -20,6 +20,8 @@ public class Main {
       serverSocket.setReuseAddress(true);
       // Wait for connection from client.
       clientSocket = serverSocket.accept();
+      OutputStream outputStream = clientSocket.getOutputStream();
+      outputStream.write("+PONG\r\n".getBytes());
     } catch (IOException e) {
       System.out.println("IOException: " + e.getMessage());
     } finally {
@@ -31,7 +33,5 @@ public class Main {
         System.out.println("IOException: " + e.getMessage());
       }
     }
-    OutputStream outputStream = clientSocket.getOutputStream();
-    outputStream.write("+PONG\r\n".getBytes());
   }
 }
