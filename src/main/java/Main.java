@@ -200,7 +200,7 @@ public class Main {
           if (!lists.containsKey(commands.get(1))) {
             out.write("$-1\r\n".getBytes());
           } else {
-            if (commands.size() > 1) {
+            if (commands.size() > 2) {
               int count = Integer.parseInt(commands.get(2));
               count = Math.min(count, lists.get(commands.get(1)).size());
               List<String> response = new ArrayList<>();
