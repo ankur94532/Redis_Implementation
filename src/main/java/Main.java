@@ -92,9 +92,6 @@ public class Main {
         if (sb.length() > 0) {
           commands.add(sb.toString());
         }
-        for (String command : commands) {
-          System.out.println(command);
-        }
         used += n;
         if (commands.get(0).equalsIgnoreCase("echo")) {
           String p = commands.get(1);
@@ -143,8 +140,8 @@ public class Main {
           out.write("\r\n".getBytes());
         } else if (commands.get(0).equalsIgnoreCase("lrange")) {
           String name = commands.get(1);
-          int start = Integer.parseInt(commands.get(3));
-          int end = Integer.parseInt(commands.get(4));
+          int start = Integer.parseInt(commands.get(2));
+          int end = Integer.parseInt(commands.get(3));
           if (!lists.containsKey(name)) {
             out.write("*0\r\n".getBytes());
           } else {
