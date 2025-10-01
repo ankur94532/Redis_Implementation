@@ -56,13 +56,18 @@ public class Main {
         }
         List<String> commands = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        for (int i = used; i < used + n; i++) {
+        for (int i = used; i < used + n;) {
           System.out.println((char) buf[i]);
           if (buf[i] == '$') {
             if (sb.length() > 0) {
               commands.add(sb.toString());
               sb.setLength(0);
             }
+            i++;
+            while (i < used + n && buf[i] >= 48 && buf[i] <= 57) {
+              i++;
+            }
+            continue;
           }
           if (buf[i] >= 65 && buf[i] <= 90) {
             sb.append((char) buf[i]);
@@ -70,6 +75,10 @@ public class Main {
           if (buf[i] >= 97 && buf[i] <= 122) {
             sb.append((char) buf[i]);
           }
+          if (buf[i] >= 48 && buf[i] <= 57) {
+            sb.append((char) buf[i]);
+          }
+          i++;
         }
         if (sb.length() > 0) {
           commands.add(sb.toString());
