@@ -149,8 +149,12 @@ public class Main {
             out.write("*0\r\n".getBytes());
           } else {
             List<String> list = lists.get(name);
-            start = (start + list.size()) % list.size();
-            end = (end + list.size()) % list.size();
+            while (start < 0) {
+              start = (start + list.size()) % list.size();
+            }
+            while (end < 0) {
+              end = (end + list.size()) % list.size();
+            }
             if (start >= list.size() || start > end) {
               out.write("*0\r\n".getBytes());
             } else {
