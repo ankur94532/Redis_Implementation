@@ -358,7 +358,6 @@ public class Main {
     String[] input2 = id.split("-");
     Long a = Long.parseLong(input1[0]);
     Long b = Long.parseLong(input2[0]);
-    System.out.println(a + " " + b);
     if (b < a) {
       return true;
     }
@@ -367,11 +366,10 @@ public class Main {
     }
     a = Long.parseLong(input1[1]);
     b = Long.parseLong(input2[1]);
-    System.out.println(a + " " + b);
     if (b > a) {
-      return true;
+      return false;
     }
-    return false;
+    return true;
   }
 
   static long secsToNanos(double secs) {
