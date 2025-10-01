@@ -138,6 +138,27 @@ public class Main {
           out.write((":").getBytes());
           out.write(p.getBytes());
           out.write("\r\n".getBytes());
+        } else if (commands.get(0).equalsIgnoreCase("lrange")) {
+          String name = commands.get(1);
+          int start = Integer.parseInt(commands.get(3));
+          int end = Integer.parseInt(commands.get(4));
+          if (!lists.containsKey(name)) {
+            out.write("*0\r\n".getBytes());
+          } else {
+            List<String> list = lists.get(name);
+            if (start >= list.size() || start > end) {
+              out.write("*0\r\n".getBytes());
+            } else {
+              end = Math.min(end, list.size() - 1);
+              int len = end - start + 1;
+              out.write(("*" + Integer.toString(len) + "\r\n").getBytes());
+              for (int i = start; i <= end; i++) {
+                String str = list.get(i);
+                out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
+                out.write((str + "\r\n").getBytes());
+              }
+            }
+          }
         }
       }
     } catch (IOException ignored) {
