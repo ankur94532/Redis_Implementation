@@ -81,7 +81,7 @@ public class Main {
         boolean first = false;
         boolean second = false;
         for (int i = used; i < used + n; i++) {
-          System.out.println(buf[i]);
+          System.out.println(buf[i] + (char) buf[i]);
         }
         for (int i = used; i < used + n;) {
           if (!first && buf[i] == '*') {
