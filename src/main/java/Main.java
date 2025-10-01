@@ -10,6 +10,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -403,39 +404,35 @@ public class Main {
     if (timeout == 0) {
       timeout = 10000000000000L;
     }
-    Instant later = Instant.now().plusMillis(timeout);
-    Object keyLock = new Object();
-    if (locks.containsKey(key)) {
-      keyLock = locks.get(key);
-    }
+    Instant deadline = Instant.now().plusMillis(timeout);
+    final Object keyLock = locks.getOrDefault(key, new Object());
     locks.put(key, keyLock);
     Thread worker = new Thread(() -> {
-      synchronized (lock) {
-        while (Instant.now().isBefore(later) && check(key, start)) {
+      synchronized (keyLock) {
+        for (;;) {
+          if (check(key, start)) {
+            long remNanos = Duration.between(Instant.now(), deadline).toNanos();
+            long ms = remNanos / 1_000_000L;
+            int ns = (int) (remNanos % 1_000_000L);
+            try {
+              keyLock.wait(ms, ns);
+            } catch (InterruptedException ie) {
+              Thread.currentThread().interrupt();
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+        if (check(key, start)) {
           try {
-            lock.wait();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return;
-          } finally {
-            if (!streams.containsKey(key)) {
-              try {
-                out.write("*-1\r\n".getBytes());
-                return;
-              } catch (IOException e) {
-              }
-            }
-            if (check(key, start)) {
-              try {
-                out.write("*-1\r\n".getBytes());
-              } catch (IOException e) {
-              }
-            } else {
-              try {
-                readRange(key, start, out);
-              } catch (IOException e) {
-              }
-            }
+            out.write("*-1\r\n".getBytes());
+          } catch (IOException e) {
+          }
+        } else {
+          try {
+            readRange(key, start, out);
+          } catch (IOException e) {
           }
         }
       }
