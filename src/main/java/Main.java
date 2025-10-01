@@ -361,7 +361,9 @@ public class Main {
           out.write(b);
           out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
           if (locks.containsKey(commands.get(1))) {
-            locks.get(commands.get(1)).notifyAll();
+            synchronized (locks.get(commands.get(1))) {
+              locks.get(commands.get(1)).notifyAll();
+            }
           }
         } else if (commands.get(0).equalsIgnoreCase("xrange")) {
           if (commands.get(2).equals("-")) {
