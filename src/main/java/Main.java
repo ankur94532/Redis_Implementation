@@ -167,6 +167,20 @@ public class Main {
               }
             }
           }
+        } else if (commands.get(0).equalsIgnoreCase("lpush")) {
+          List<String> entry = new ArrayList<>();
+          if (lists.containsKey(commands.get(1))) {
+            entry = lists.get(commands.get(1));
+          }
+          for (int i = 2; i < commands.size(); i++) {
+            entry.add(0, commands.get(i));
+          }
+          lists.put(commands.get(1), entry);
+          int len = entry.size();
+          String p = Integer.toString(len);
+          out.write((":").getBytes());
+          out.write(p.getBytes());
+          out.write("\r\n".getBytes());
         }
       }
     } catch (IOException ignored) {
