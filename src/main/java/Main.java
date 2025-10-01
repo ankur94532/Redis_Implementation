@@ -367,7 +367,7 @@ public class Main {
             commands.set(2, "0-0");
           }
           if (commands.get(3).equals("+")) {
-            commands.set(2, System.currentTimeMillis() + "-0");
+            commands.set(3, System.currentTimeMillis() + "-0");
           }
           if (commands.get(2).split("-").length == 1) {
             commands.set(2, commands.get(2) + "-0");
