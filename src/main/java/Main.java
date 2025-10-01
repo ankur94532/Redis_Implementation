@@ -314,6 +314,7 @@ public class Main {
             out.write(("+none\r\n").getBytes());
           }
         } else if (commands.get(0).equalsIgnoreCase("xadd")) {
+          System.out.println("hlo");
           if (check_0(commands.get(2))) {
             out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
             continue;
