@@ -209,15 +209,15 @@ public class Main {
                 lists.get(commands.get(1)).remove(0);
                 count--;
               }
-              out.write(("*" + response.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
+              out.write(("*" + response.size() + "\r\n").getBytes());
               for (String s : response) {
                 if (s == null) {
-                  out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
+                  out.write("$-1\r\n".getBytes());
                 } else {
                   byte[] data = s.getBytes(StandardCharsets.UTF_8);
-                  out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+                  out.write(("$" + data.length + "\r\n").getBytes());
                   out.write(data);
-                  out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+                  out.write("\r\n".getBytes());
                 }
               }
             } else {
