@@ -125,14 +125,15 @@ public class Main {
             out.write("$-1\r\n".getBytes());
           }
         } else if (commands.get(0).equalsIgnoreCase("rpush")) {
+          List<String> entry = new ArrayList<>();
           if (lists.containsKey(commands.get(1))) {
-            lists.get(commands.get(1)).add(commands.get(2));
-          } else {
-            List<String> entry = new ArrayList<>();
-            entry.add(commands.get(2));
-            lists.put(commands.get(1), entry);
+            entry = lists.get(commands.get(1));
           }
-          int len = lists.get(commands.get(1)).size();
+          for (int i = 2; i < commands.size(); i++) {
+            entry.add(commands.get(i));
+          }
+          lists.put(commands.get(1), entry);
+          int len = entry.size();
           String p = Integer.toString(len);
           out.write((":").getBytes());
           out.write(p.getBytes());
