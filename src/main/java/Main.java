@@ -8,8 +8,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,7 +29,7 @@ public class Main {
   static Map<String, Key> entries = new HashMap<>();
   static Map<String, List<String>> lists = new ConcurrentHashMap<>();
   static final Map<String, ArrayDeque<Waiter>> waitersByKey = new HashMap<>();
-
+  static Set<String> streams = new HashSet<>();
   static final Object lock = new Object();
 
   static final class Waiter {
@@ -96,7 +98,7 @@ public class Main {
           if ((buf[i] >= 'A' && buf[i] <= 'Z') ||
               (buf[i] >= 'a' && buf[i] <= 'z') ||
               (buf[i] >= '0' && buf[i] <= '9') ||
-              buf[i] == '-' || buf[i] == '.') {
+              buf[i] == '-' || buf[i] == '.' || buf[i] == '_') {
             sb.append((char) buf[i]);
           }
           i++;
@@ -304,11 +306,19 @@ public class Main {
           }
 
         } else if (commands.get(0).equalsIgnoreCase("type")) {
-          if (entries.containsKey(commands.get(1))) {
+          if (streams.contains(commands.get(1))) {
+            out.write(("+stream\r\n").getBytes());
+          } else if (entries.containsKey(commands.get(1))) {
             out.write(("+string\r\n").getBytes());
           } else {
             out.write(("+none\r\n").getBytes());
           }
+        } else if (commands.get(0).equalsIgnoreCase("xadd")) {
+          streams.add(commands.get(1));
+          String p = commands.get(2);
+          out.write(":".getBytes(StandardCharsets.US_ASCII));
+          out.write(p.getBytes(StandardCharsets.US_ASCII));
+          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
         }
       }
     } catch (IOException ignored) {
