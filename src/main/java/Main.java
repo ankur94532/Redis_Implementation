@@ -316,8 +316,9 @@ public class Main {
         } else if (commands.get(0).equalsIgnoreCase("xadd")) {
           streams.add(commands.get(1));
           String p = commands.get(2);
-          out.write(":".getBytes(StandardCharsets.US_ASCII));
-          out.write(p.getBytes(StandardCharsets.US_ASCII));
+          byte[] b = p.getBytes(StandardCharsets.UTF_8);
+          out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+          out.write(b);
           out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
         }
       }
