@@ -106,7 +106,9 @@ public class Main {
         if (sb.length() > 0)
           commands.add(sb.toString());
         used += n;
-
+        for (String command : commands) {
+          System.out.println(command);
+        }
         if (commands.isEmpty())
           continue;
 
@@ -314,9 +316,6 @@ public class Main {
             out.write(("+none\r\n").getBytes());
           }
         } else if (commands.get(0).equalsIgnoreCase("xadd")) {
-          for (String command : commands) {
-            System.out.println(command);
-          }
           if (commands.get(2).equals("*")) {
             commands.set(2, generateUnixId());
           } else if (commands.get(2).split("-")[1].equals("*")) {
