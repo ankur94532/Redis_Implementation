@@ -29,7 +29,7 @@ public class Main {
   static Map<String, Key> entries = new HashMap<>();
   static Map<String, List<String>> lists = new ConcurrentHashMap<>();
   static final Map<String, ArrayDeque<Waiter>> waitersByKey = new HashMap<>();
-  static Set<String> streams = new HashSet<>();
+  static HashMap<String, List<String>> streams = new HashMap<>();
   static final Object lock = new Object();
 
   static final class Waiter {
@@ -306,7 +306,7 @@ public class Main {
           }
 
         } else if (commands.get(0).equalsIgnoreCase("type")) {
-          if (streams.contains(commands.get(1))) {
+          if (streams.containsKey(commands.get(1))) {
             out.write(("+stream\r\n").getBytes());
           } else if (entries.containsKey(commands.get(1))) {
             out.write(("+string\r\n").getBytes());
@@ -314,7 +314,21 @@ public class Main {
             out.write(("+none\r\n").getBytes());
           }
         } else if (commands.get(0).equalsIgnoreCase("xadd")) {
-          streams.add(commands.get(1));
+          if (check_0(commands.get(2))) {
+            out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
+            continue;
+          }
+          List<String> ids = new ArrayList<>();
+          if (streams.containsKey(commands.get(1))) {
+            ids = streams.get(commands.get(1));
+            if (check_inc(ids.getLast(), commands.get(2))) {
+              out.write(
+                  ("-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n").getBytes());
+              continue;
+            }
+          }
+          ids.add(commands.get(2));
+          streams.put(commands.get(0), ids);
           String p = commands.get(2);
           byte[] b = p.getBytes(StandardCharsets.UTF_8);
           out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
@@ -329,6 +343,33 @@ public class Main {
       } catch (IOException ignore) {
       }
     }
+  }
+
+  static boolean check_0(String id) {
+    String[] ids = id.split("-");
+    if (ids[0].equals("0") && ids[0].equals("0")) {
+      return true;
+    }
+    return false;
+  }
+
+  static boolean check_inc(String last, String id) {
+    String[] input1 = last.split("-");
+    String[] input2 = id.split("-");
+    Long a = Long.parseLong(input1[0]);
+    Long b = Long.parseLong(input1[0]);
+    if (b < a) {
+      return true;
+    }
+    if (b > a) {
+      return false;
+    }
+    a = Long.parseLong(input1[1]);
+    b = Long.parseLong(input2[1]);
+    if (b > a) {
+      return true;
+    }
+    return false;
   }
 
   static long secsToNanos(double secs) {
