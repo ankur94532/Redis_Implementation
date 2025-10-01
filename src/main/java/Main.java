@@ -80,9 +80,6 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         boolean first = false;
         boolean second = false;
-        for (int i = used; i < used + n; i++) {
-          System.out.println(buf[i] + (char) buf[i]);
-        }
         for (int i = used; i < used + n;) {
           if (!first && buf[i] == '*') {
             i++;
@@ -387,6 +384,11 @@ public class Main {
           findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
           if (commands.get(1).equalsIgnoreCase("BLOCK")) {
+            if (commands.size() == 5) {
+              readBlock(Long.parseLong(commands.get(2)), commands.get(4),
+                  Long.toString(System.currentTimeMillis()) + "-0", out);
+              continue;
+            }
             readBlock(Long.parseLong(commands.get(2)), commands.get(4), commands.get(5), out);
             continue;
           }
@@ -408,10 +410,6 @@ public class Main {
   }
 
   static void readBlock(long timeoutMs, String key, String start, OutputStream out) throws IOException {
-    if (start.equals("$")) {
-      long currentUnixTimeMillis = System.currentTimeMillis();
-      start = Long.toString(currentUnixTimeMillis) + "-0";
-    }
     final boolean waitForever = timeoutMs <= 0;
     final long deadline = waitForever
         ? Long.MAX_VALUE
