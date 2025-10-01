@@ -411,7 +411,7 @@ public class Main {
     locks.put(key, keyLock);
     Thread worker = new Thread(() -> {
       synchronized (lock) {
-        while (Instant.now().isBefore(later)) {
+        while (Instant.now().isBefore(later) && check(key, start)) {
           try {
             lock.wait();
           } catch (InterruptedException e) {
@@ -425,15 +425,7 @@ public class Main {
               } catch (IOException e) {
               }
             }
-            int count = 0;
-            HashMap<String, HashMap<String, String>> entries = streams.get(key);
-            for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
-              if (checkRange(it.getKey(), start)) {
-                count++;
-                break;
-              }
-            }
-            if (count == 0) {
+            if (check(key, start)) {
               try {
                 out.write("*-1\r\n".getBytes());
               } catch (IOException e) {
@@ -449,6 +441,18 @@ public class Main {
       }
     });
     worker.start();
+  }
+
+  static boolean check(String id, String start) {
+    int count = 0;
+    HashMap<String, HashMap<String, String>> entries = streams.get(id);
+    for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
+      if (checkRange(it.getKey(), start)) {
+        count++;
+        break;
+      }
+    }
+    return count == 0;
   }
 
   static void readRange(String id, String start,
