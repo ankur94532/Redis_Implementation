@@ -6,12 +6,14 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,7 +31,7 @@ public class Main {
   static Map<String, Key> entries = new HashMap<>();
   static Map<String, List<String>> lists = new ConcurrentHashMap<>();
   static final Map<String, ArrayDeque<Waiter>> waitersByKey = new HashMap<>();
-  static HashMap<String, List<String>> streams = new HashMap<>();
+  static HashMap<String, HashMap<String, HashMap<String, String>>> streams = new HashMap<>();
   static final Object lock = new Object();
 
   static final class Waiter {
@@ -108,9 +110,11 @@ public class Main {
         if (sb.length() > 0)
           commands.add(sb.toString());
         used += n;
-        for (String command : commands) {
-          System.out.println(command);
-        }
+        /*
+         * for (String command : commands) {
+         * System.out.println(command);
+         * }
+         */
         if (commands.isEmpty())
           continue;
 
@@ -333,22 +337,39 @@ public class Main {
             out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
             continue;
           }
-          List<String> ids = new ArrayList<>();
+          HashMap<String, HashMap<String, String>> newEntries = new HashMap<>();
           if (streams.containsKey(commands.get(1))) {
-            ids = streams.get(commands.get(1));
-            if (check_inc(ids.getLast(), commands.get(2))) {
+            newEntries = streams.get(commands.get(1));
+            String last = "";
+            for (Map.Entry<String, HashMap<String, String>> entry : newEntries.entrySet()) {
+              last = entry.getKey();
+            }
+            if (check_inc(last, commands.get(2))) {
               out.write(
-                  ("-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n").getBytes());
+                  ("-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n")
+                      .getBytes());
               continue;
             }
           }
-          ids.add(commands.get(2));
-          streams.put(commands.get(1), ids);
+          HashMap<String, String> entries = new HashMap<>();
+          for (int i = 2; i < commands.size(); i += 2) {
+            entries.put(commands.get(i), commands.get(i + 1));
+          }
+          newEntries.put(commands.get(1), entries);
+          streams.put(commands.get(1), newEntries);
           String p = commands.get(2);
           byte[] b = p.getBytes(StandardCharsets.UTF_8);
           out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
           out.write(b);
           out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+        } else if (commands.get(0).equalsIgnoreCase("xrange")) {
+          if (commands.get(2).split("-").length == 1) {
+            commands.set(2, commands.get(2) + "-0");
+          }
+          if (commands.get(3).split("-").length == 1) {
+            commands.set(3, commands.get(3) + "-1000000000");
+          }
+          findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
         }
       }
     } catch (IOException ignored) {
@@ -358,6 +379,50 @@ public class Main {
       } catch (IOException ignore) {
       }
     }
+  }
+
+  static void findByRange(HashMap<String, HashMap<String, String>> entries, String start, String end,
+      OutputStream out) throws IOException {
+    List<String> keys = new ArrayList<>();
+    for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
+      if (checkRange(it.getKey(), start, end)) {
+        keys.add(it.getKey());
+      }
+    }
+    out.write(("*" + keys.size() + "\r\n").getBytes());
+    for (String key : keys) {
+      HashMap<String, String> entry = entries.get(key);
+      int len = 2 * entry.size();
+      out.write(("*2" + "\r\n").getBytes());
+      out.write(("$" + entry.size() + "\r\n" + key + "\r\n").getBytes());
+      out.write(("*" + len + "\r\n").getBytes());
+      for (Map.Entry<String, String> it : entry.entrySet()) {
+        out.write(("$" + it.getKey().length() + "\r\n" + it.getKey() + "\r\n").getBytes());
+        out.write(("$" + it.getValue().length() + "\r\n" + it.getValue() + "\r\n").getBytes());
+      }
+    }
+  }
+
+  static boolean checkRange(String key, String start, String end) {
+    String[] inputs1 = key.split("-");
+    String[] inputs2 = start.split("-");
+    String[] inputs3 = end.split("-");
+    Long x1 = Long.parseLong(inputs1[0]);
+    Long y1 = Long.parseLong(inputs1[1]);
+    Long x2 = Long.parseLong(inputs2[0]);
+    Long y2 = Long.parseLong(inputs2[1]);
+    Long x3 = Long.parseLong(inputs3[0]);
+    Long y3 = Long.parseLong(inputs3[1]);
+    if (x1 < x2 || x1 > x3) {
+      return false;
+    }
+    if (x1 == x2 && y1 < y2) {
+      return false;
+    }
+    if (x1 == x3 && y1 > y3) {
+      return false;
+    }
+    return true;
   }
 
   static String generateUnixId() {
@@ -371,7 +436,10 @@ public class Main {
 
   static String generateSeq(String key, String id) {
     if (streams.containsKey(key)) {
-      String last = streams.get(key).getLast();
+      String last = "";
+      for (Map.Entry<String, HashMap<String, String>> entry : streams.get(key).entrySet()) {
+        last = entry.getKey();
+      }
       if (last.split("-")[0].equals(id)) {
         long k = Long.parseLong(last.split("-")[1]);
         k++;
