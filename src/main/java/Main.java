@@ -304,6 +304,7 @@ public class Main {
           }
 
         } else if (commands.get(0).equals("type")) {
+          System.out.println("hi");
           if (entries.containsKey(commands.get(1))) {
             out.write(("+string\r\n").getBytes());
           } else {
