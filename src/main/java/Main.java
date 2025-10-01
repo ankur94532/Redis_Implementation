@@ -394,7 +394,7 @@ public class Main {
       HashMap<String, String> entry = entries.get(key);
       int len = 2 * entry.size();
       out.write(("*2" + "\r\n").getBytes());
-      out.write(("$" + entry.size() + "\r\n" + key + "\r\n").getBytes());
+      out.write(("$" + key.length() + "\r\n" + key + "\r\n").getBytes());
       out.write(("*" + len + "\r\n").getBytes());
       for (Map.Entry<String, String> it : entry.entrySet()) {
         out.write(("$" + it.getKey().length() + "\r\n" + it.getKey() + "\r\n").getBytes());
