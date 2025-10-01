@@ -249,7 +249,6 @@ public class Main {
           final long deadline = waitForever
               ? Long.MAX_VALUE
               : System.nanoTime() + secsToNanos(timeoutSecsD);
-          System.out.println(secsToNanos(timeoutSecsD));
           String popped = null;
           boolean timedOut = false;
 
@@ -304,6 +303,12 @@ public class Main {
             out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
           }
 
+        } else if (commands.get(0).equals("type")) {
+          if (entries.containsKey(commands.get(1))) {
+            out.write(("+string\r\n").getBytes());
+          } else {
+            out.write(("+none\r\n").getBytes());
+          }
         }
       }
     } catch (IOException ignored) {
@@ -316,11 +321,9 @@ public class Main {
   }
 
   static long secsToNanos(double secs) {
-    // clamp huge values
-    System.out.println(secs);
     if (secs >= (Long.MAX_VALUE / 1_000_000_000d))
       return Long.MAX_VALUE;
-    long ns = (long) Math.round(secs * 1_000_000_000d); // keep fractions
+    long ns = (long) Math.round(secs * 1_000_000_000d);
     return Math.max(ns, 0L);
   }
 
