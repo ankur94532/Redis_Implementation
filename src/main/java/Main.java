@@ -79,6 +79,7 @@ public class Main {
         List<String> commands = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         boolean first = false;
+        boolean second = false;
         for (int i = used; i < used + n;) {
           if (!first && buf[i] == '*') {
             i++;
@@ -87,7 +88,7 @@ public class Main {
             first = true;
             continue;
           }
-          if (buf[i] == '$') {
+          if (!second && buf[i] == '$') {
             if (sb.length() > 0) {
               commands.add(sb.toString());
               sb.setLength(0);
@@ -95,12 +96,13 @@ public class Main {
             i++;
             while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
               i++;
+            second = true;
             continue;
           }
           if ((buf[i] >= 'A' && buf[i] <= 'Z') ||
               (buf[i] >= 'a' && buf[i] <= 'z') ||
               (buf[i] >= '0' && buf[i] <= '9') ||
-              buf[i] == '-' || buf[i] == '.' || buf[i] == '_' || buf[i] == '*' || buf[i] == '+') {
+              buf[i] == '-' || buf[i] == '.' || buf[i] == '_' || buf[i] == '*' || buf[i] == '+' || buf[i] == '$') {
             sb.append((char) buf[i]);
           }
           i++;
