@@ -209,6 +209,7 @@ public class Main {
                 lists.get(commands.get(1)).remove(0);
                 count--;
               }
+              System.out.println(response.size());
               for (int i = 0; i < response.size(); i++) {
                 String str = response.get(i);
                 out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
