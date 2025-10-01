@@ -363,6 +363,9 @@ public class Main {
           out.write(b);
           out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
         } else if (commands.get(0).equalsIgnoreCase("xrange")) {
+          if (commands.get(2).equals("-")) {
+            commands.set(2, "0-0");
+          }
           if (commands.get(2).split("-").length == 1) {
             commands.set(2, commands.get(2) + "-0");
           }
