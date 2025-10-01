@@ -195,10 +195,26 @@ public class Main {
           if (!lists.containsKey(commands.get(1))) {
             out.write("$-1\r\n".getBytes());
           } else {
-            String str = lists.get(commands.get(1)).get(0);
-            lists.get(commands.get(1)).remove(0);
-            out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
-            out.write((str + "\r\n").getBytes());
+            if (commands.size() > 1) {
+              int count = Integer.parseInt(commands.get(1));
+              count = Math.min(count, lists.get(commands.get(0)).size());
+              List<String> response = new ArrayList<>();
+              while (count > 0) {
+                response.add(lists.get(commands.get(0)).get(0));
+                lists.get(commands.get(0)).remove(0);
+                count--;
+              }
+              for (int i = 0; i < response.size(); i++) {
+                String str = response.get(i);
+                out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
+                out.write((str + "\r\n").getBytes());
+              }
+            } else {
+              String str = lists.get(commands.get(1)).get(0);
+              lists.get(commands.get(1)).remove(0);
+              out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
+              out.write((str + "\r\n").getBytes());
+            }
           }
         }
       }
