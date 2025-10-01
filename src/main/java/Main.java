@@ -378,10 +378,11 @@ public class Main {
           }
           findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
-          out.write(("*1\r\n").getBytes());
+          // out.write(("*1\r\n").getBytes());
+          System.out.println("*1\r\n");
           int len = (commands.size() - 2) / 2;
-          System.out.println(len);
           out.write(("*" + len + "\r\n").getBytes());
+          System.out.println("*" + len + "\r\n");
           for (int i = 2; i < 2 + len; i++) {
             readRange(commands.get(i), commands.get(i + len), out);
           }
