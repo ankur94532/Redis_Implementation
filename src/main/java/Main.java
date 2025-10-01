@@ -347,7 +347,7 @@ public class Main {
 
   static boolean check_0(String id) {
     String[] ids = id.split("-");
-    if (ids[0].equals("0") && ids[0].equals("0")) {
+    if (ids[0].equals("0") && ids[1].equals("0")) {
       return true;
     }
     return false;
