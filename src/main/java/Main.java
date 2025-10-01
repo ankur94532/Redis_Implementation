@@ -317,6 +317,7 @@ public class Main {
           if (commands.get(2).equals("*")) {
             commands.set(2, generateUnixId());
           } else if (commands.get(2).split("-")[1].equals("*")) {
+            System.out.println("hi");
             String ids[] = commands.get(2).split("-");
             ids[1] = generateSeq(commands.get(1), ids[0]);
             StringBuilder builder = new StringBuilder();
