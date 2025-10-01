@@ -314,7 +314,6 @@ public class Main {
             out.write(("+none\r\n").getBytes());
           }
         } else if (commands.get(0).equalsIgnoreCase("xadd")) {
-          System.out.println("hlo");
           if (check_0(commands.get(2))) {
             out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
             continue;
@@ -329,7 +328,7 @@ public class Main {
             }
           }
           ids.add(commands.get(2));
-          streams.put(commands.get(0), ids);
+          streams.put(commands.get(1), ids);
           String p = commands.get(2);
           byte[] b = p.getBytes(StandardCharsets.UTF_8);
           out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
