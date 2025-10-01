@@ -242,11 +242,13 @@ public class Main {
           }
 
         } else if (commands.get(0).equalsIgnoreCase("blpop")) {
-          final String key = commands.get(1);
-          final long timeoutSecs = Long.parseLong(commands.get(2)); // 0 => block forever
-          final long deadline = (timeoutSecs == 0)
+          String key = commands.get(1);
+          final double timeoutSecsD = Double.parseDouble(commands.get(2));
+          final boolean waitForever = timeoutSecsD <= 0.0;
+
+          final long deadline = waitForever
               ? Long.MAX_VALUE
-              : System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(timeoutSecs);
+              : System.nanoTime() + secsToNanos(timeoutSecsD);
 
           String popped = null;
           boolean timedOut = false;
@@ -260,18 +262,23 @@ public class Main {
               waitersByKey.computeIfAbsent(key, k -> new ArrayDeque<>()).addLast(me);
 
               for (;;) {
-                long remaining = (timeoutSecs == 0) ? Long.MAX_VALUE : (deadline - System.nanoTime());
-                if (remaining <= 0L) {
+                long remaining = waitForever ? Long.MAX_VALUE : (deadline - System.nanoTime());
+                if (!waitForever && remaining <= 0L) {
                   Deque<Waiter> q = waitersByKey.get(key);
                   if (q != null)
                     q.remove(me);
                   timedOut = true;
                   break;
                 }
-                long ms = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(remaining);
-                int ns = (int) (remaining - java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(ms));
+
                 try {
-                  lock.wait((timeoutSecs == 0) ? 0 : ms, (timeoutSecs == 0) ? 0 : ns);
+                  if (waitForever) {
+                    lock.wait();
+                  } else {
+                    long ms = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(remaining);
+                    int ns = (int) (remaining - java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(ms));
+                    lock.wait(ms, ns);
+                  }
                 } catch (InterruptedException ie) {
                   Thread.currentThread().interrupt();
                   Deque<Waiter> q = waitersByKey.get(key);
@@ -294,8 +301,9 @@ public class Main {
           if (popped != null) {
             writeRespArray(out, java.util.List.of(key, popped));
           } else if (timedOut) {
-            out.write("*-1\r\n".getBytes(StandardCharsets.US_ASCII));
+            out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
           }
+
         }
       }
     } catch (IOException ignored) {
@@ -305,6 +313,14 @@ public class Main {
       } catch (IOException ignore) {
       }
     }
+  }
+
+  static long secsToNanos(double secs) {
+    // clamp huge values
+    if (secs >= (Long.MAX_VALUE / 1_000_000_000d))
+      return Long.MAX_VALUE;
+    long ns = (long) Math.round(secs * 1_000_000_000d); // keep fractions
+    return Math.max(ns, 0L);
   }
 
   static void respArray(OutputStream out, List<String> response) throws IOException {
