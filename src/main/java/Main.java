@@ -6,8 +6,10 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.time.Instant;
 
 class Key {
@@ -22,6 +24,7 @@ class Key {
 
 public class Main {
   static Map<String, Key> entries = new HashMap<>();
+  static Map<String, List<String>> lists = new HashMap<>();
 
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
@@ -89,9 +92,6 @@ public class Main {
         if (sb.length() > 0) {
           commands.add(sb.toString());
         }
-        for (String command : commands) {
-          System.out.println(command);
-        }
         used += n;
         if (commands.get(0).equalsIgnoreCase("echo")) {
           String p = commands.get(1);
@@ -123,6 +123,14 @@ public class Main {
             }
           } else {
             out.write("$-1\r\n".getBytes());
+          }
+        } else if (commands.get(0).equalsIgnoreCase("rpush")) {
+          if (lists.containsKey(commands.get(1))) {
+            lists.get(commands.get(1)).add(commands.get(2));
+          } else {
+            List<String> entry = new ArrayList<>();
+            entry.add(commands.get(2));
+            lists.put(commands.get(1), entry);
           }
         }
       }
