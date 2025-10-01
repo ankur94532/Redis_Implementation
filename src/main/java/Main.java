@@ -5,22 +5,30 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
+  static Map<String, String> entries = new HashMap<>();
+
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
     int port = 6379;
     final ServerSocket serverSocket = new ServerSocket(port);
     serverSocket.setReuseAddress(true);
-    while (true) {
-      Socket clientSocket = serverSocket.accept();
-      new Thread(() -> {
-        try {
-          handle(clientSocket);
-        } catch (IOException e) {
-        }
-      }).start();
+    try {
+      while (true) {
+        Socket clientSocket = serverSocket.accept();
+        new Thread(() -> {
+          try {
+            handle(clientSocket);
+          } catch (IOException e) {
+          }
+        }).start();
+      }
+    } finally {
+      serverSocket.close();
     }
   }
 
@@ -62,6 +70,18 @@ public class Main {
           out.write("\r\n".getBytes());
         } else if (commands.get(0).equalsIgnoreCase("ping")) {
           out.write("+PONG\r\n".getBytes());
+        } else if (commands.get(0).equalsIgnoreCase("set")) {
+          entries.put(commands.get(1), commands.get(2));
+          out.write("+OK\r\n".getBytes());
+        } else if (commands.get(0).equalsIgnoreCase("get")) {
+          if (entries.containsKey(commands.get(1))) {
+            String p = entries.get(commands.get(1));
+            out.write(("$" + p.length() + "\r\n").getBytes());
+            out.write(p.getBytes());
+            out.write("\r\n".getBytes());
+          } else {
+            out.write("$-1\r\n".getBytes());
+          }
         }
       }
     } catch (IOException ignored) {
