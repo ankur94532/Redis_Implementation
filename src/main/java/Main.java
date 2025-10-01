@@ -82,6 +82,9 @@ public class Main {
         if (sb.length() > 0) {
           commands.add(sb.toString());
         }
+        for (String str : commands) {
+          System.out.println(str);
+        }
         used += n;
         if (commands.get(0).equalsIgnoreCase("echo")) {
           String p = commands.get(1);
