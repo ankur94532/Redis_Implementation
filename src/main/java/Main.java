@@ -98,6 +98,7 @@ public class Main {
             Key key = new Key(commands.get(2), Instant.now().plusMillis(1000000000));
             entries.put(commands.get(1), key);
           }
+          out.write("+OK\r\n".getBytes());
         } else if (commands.get(0).equalsIgnoreCase("get")) {
           if (entries.containsKey(commands.get(1))) {
             Key key = entries.get(commands.get(1));
