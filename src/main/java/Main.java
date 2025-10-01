@@ -377,6 +377,8 @@ public class Main {
             commands.set(3, commands.get(3) + "-1000000000");
           }
           findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
+        } else if (commands.get(0).equalsIgnoreCase("xread")) {
+          readRange(commands.get(1), commands.get(2), out);
         }
       }
     } catch (IOException ignored) {
@@ -384,6 +386,30 @@ public class Main {
       try {
         client.close();
       } catch (IOException ignore) {
+      }
+    }
+  }
+
+  static void readRange(String id, String start,
+      OutputStream out) throws IOException {
+    List<String> keys = new ArrayList<>();
+    HashMap<String, HashMap<String, String>> entries = streams.get(id);
+    for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
+      if (checkRange(it.getKey(), start)) {
+        keys.add(it.getKey());
+      }
+    }
+    out.write(("*1\r\n").getBytes());
+    out.write(("*" + (keys.size() + 1) + id + "\r\n").getBytes());
+    for (String key : keys) {
+      HashMap<String, String> entry = entries.get(key);
+      int len = 2 * entry.size();
+      out.write(("*2" + "\r\n").getBytes());
+      out.write(("$" + key.length() + "\r\n" + key + "\r\n").getBytes());
+      out.write(("*" + len + "\r\n").getBytes());
+      for (Map.Entry<String, String> it : entry.entrySet()) {
+        out.write(("$" + it.getKey().length() + "\r\n" + it.getKey() + "\r\n").getBytes());
+        out.write(("$" + it.getValue().length() + "\r\n" + it.getValue() + "\r\n").getBytes());
       }
     }
   }
@@ -427,6 +453,22 @@ public class Main {
       return false;
     }
     if (x1 == x3 && y1 > y3) {
+      return false;
+    }
+    return true;
+  }
+
+  static boolean checkRange(String key, String start) {
+    String[] inputs1 = key.split("-");
+    String[] inputs2 = start.split("-");
+    Long x1 = Long.parseLong(inputs1[0]);
+    Long y1 = Long.parseLong(inputs1[1]);
+    Long x2 = Long.parseLong(inputs2[0]);
+    Long y2 = Long.parseLong(inputs2[1]);
+    if (x1 < x2) {
+      return false;
+    }
+    if (x1 == x2 && y1 < y2) {
       return false;
     }
     return true;
