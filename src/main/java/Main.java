@@ -378,7 +378,12 @@ public class Main {
           }
           findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
-          readRange(commands.get(2), commands.get(3), out);
+          out.write(("*1\r\n").getBytes());
+          int len = (commands.size() - 2) / 2;
+          out.write(("*" + len + "\r\n").getBytes());
+          for (int i = 2; i < 2 + len; i++) {
+            readRange(commands.get(i), commands.get(i + len), out);
+          }
         }
       }
     } catch (IOException ignored) {
@@ -399,7 +404,6 @@ public class Main {
         keys.add(it.getKey());
       }
     }
-    out.write(("*1\r\n").getBytes());
     out.write(("*2\r\n").getBytes());
     out.write(("$" + id.length() + "\r\n" + id + "\r\n").getBytes());
     out.write(("*" + keys.size() + "\r\n").getBytes());
