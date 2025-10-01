@@ -317,6 +317,7 @@ public class Main {
 
   static long secsToNanos(double secs) {
     // clamp huge values
+    System.out.println(secs);
     if (secs >= (Long.MAX_VALUE / 1_000_000_000d))
       return Long.MAX_VALUE;
     long ns = (long) Math.round(secs * 1_000_000_000d); // keep fractions
