@@ -4,13 +4,14 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
 
 class Key {
   public String value;
@@ -24,7 +25,22 @@ class Key {
 
 public class Main {
   static Map<String, Key> entries = new HashMap<>();
-  static Map<String, List<String>> lists = new HashMap<>();
+  static Map<String, List<String>> lists = new ConcurrentHashMap<>();
+  static final Map<String, ArrayDeque<Waiter>> waitersByKey = new HashMap<>();
+
+  static final Object lock = new Object();
+
+  static final class Waiter {
+    final Socket client;
+    final OutputStream out;
+    final String key;
+
+    Waiter(Socket c, OutputStream o, String k) {
+      this.client = c;
+      this.out = o;
+      this.key = k;
+    }
+  }
 
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
@@ -38,6 +54,7 @@ public class Main {
           try {
             handle(clientSocket);
           } catch (IOException e) {
+            e.printStackTrace();
           }
         }).start();
       }
@@ -62,9 +79,8 @@ public class Main {
         for (int i = used; i < used + n;) {
           if (buf[i] == '*') {
             i++;
-            while (i < used + n && buf[i] >= 48 && buf[i] <= 57) {
+            while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
               i++;
-            }
             continue;
           }
           if (buf[i] == '$') {
@@ -73,166 +89,245 @@ public class Main {
               sb.setLength(0);
             }
             i++;
-            while (i < used + n && buf[i] >= 48 && buf[i] <= 57) {
+            while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
               i++;
-            }
             continue;
           }
-          if (buf[i] >= 65 && buf[i] <= 90) {
-            sb.append((char) buf[i]);
-          }
-          if (buf[i] >= 97 && buf[i] <= 122) {
-            sb.append((char) buf[i]);
-          }
-          if (buf[i] >= 48 && buf[i] <= 57) {
-            sb.append((char) buf[i]);
-          }
-          if (buf[i] == 45) {
+          if ((buf[i] >= 'A' && buf[i] <= 'Z') ||
+              (buf[i] >= 'a' && buf[i] <= 'z') ||
+              (buf[i] >= '0' && buf[i] <= '9') ||
+              buf[i] == '-') {
             sb.append((char) buf[i]);
           }
           i++;
         }
-        if (sb.length() > 0) {
+        if (sb.length() > 0)
           commands.add(sb.toString());
-        }
-        /*
-         * for (String command : commands) {
-         * System.out.println(command);
-         * }
-         */
         used += n;
+
+        if (commands.isEmpty())
+          continue;
+
         if (commands.get(0).equalsIgnoreCase("echo")) {
           String p = commands.get(1);
-          out.write(("$" + p.length() + "\r\n").getBytes());
-          out.write(p.getBytes());
-          out.write("\r\n".getBytes());
+          out.write(("$" + p.getBytes(StandardCharsets.UTF_8).length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+          out.write(p.getBytes(StandardCharsets.UTF_8));
+          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+
         } else if (commands.get(0).equalsIgnoreCase("ping")) {
-          out.write("+PONG\r\n".getBytes());
+          out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
+
         } else if (commands.get(0).equalsIgnoreCase("set")) {
           if (commands.size() > 3) {
             Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
             entries.put(commands.get(1), key);
           } else {
-            Key key = new Key(commands.get(2), Instant.now().plusMillis(1000000000));
+            Key key = new Key(commands.get(2), Instant.now().plusMillis(1_000_000_000L));
             entries.put(commands.get(1), key);
           }
-          out.write("+OK\r\n".getBytes());
+          out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
+
         } else if (commands.get(0).equalsIgnoreCase("get")) {
           if (entries.containsKey(commands.get(1))) {
             Key key = entries.get(commands.get(1));
             if (Instant.now().isAfter(key.time)) {
               entries.remove(commands.get(1));
-              out.write("$-1\r\n".getBytes());
+              out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
             } else {
-              String p = entries.get(commands.get(1)).value;
-              out.write(("$" + p.length() + "\r\n").getBytes());
-              out.write(p.getBytes());
-              out.write("\r\n".getBytes());
+              String p = key.value;
+              byte[] b = p.getBytes(StandardCharsets.UTF_8);
+              out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+              out.write(b);
+              out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
             }
           } else {
-            out.write("$-1\r\n".getBytes());
+            out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
           }
+
         } else if (commands.get(0).equalsIgnoreCase("rpush")) {
-          List<String> entry = new ArrayList<>();
-          if (lists.containsKey(commands.get(1))) {
-            entry = lists.get(commands.get(1));
+          String name = commands.get(1);
+          synchronized (lock) {
+            List<String> entry = lists.get(name);
+            if (entry == null)
+              entry = new ArrayList<>();
+            for (int i = 2; i < commands.size(); i++)
+              entry.add(commands.get(i));
+            lists.put(name, entry);
+            lock.notifyAll();
+
+            int len = entry.size();
+            String p = Integer.toString(len);
+            out.write(":".getBytes(StandardCharsets.US_ASCII));
+            out.write(p.getBytes(StandardCharsets.US_ASCII));
+            out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
           }
-          for (int i = 2; i < commands.size(); i++) {
-            entry.add(commands.get(i));
+
+        } else if (commands.get(0).equalsIgnoreCase("lpush")) {
+          String name = commands.get(1);
+          synchronized (lock) {
+            List<String> entry = lists.get(name);
+            if (entry == null)
+              entry = new ArrayList<>();
+            for (int i = 2; i < commands.size(); i++)
+              entry.add(0, commands.get(i));
+            lists.put(name, entry);
+
+            lock.notifyAll();
+
+            int len = entry.size();
+            String p = Integer.toString(len);
+            out.write(":".getBytes(StandardCharsets.US_ASCII));
+            out.write(p.getBytes(StandardCharsets.US_ASCII));
+            out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
           }
-          lists.put(commands.get(1), entry);
-          int len = entry.size();
+
+        } else if (commands.get(0).equalsIgnoreCase("llen")) {
+          List<String> entry = lists.get(commands.get(1));
+          int len = (entry == null) ? 0 : entry.size();
           String p = Integer.toString(len);
-          out.write((":").getBytes());
-          out.write(p.getBytes());
-          out.write("\r\n".getBytes());
+          out.write(":".getBytes(StandardCharsets.US_ASCII));
+          out.write(p.getBytes(StandardCharsets.US_ASCII));
+          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+
         } else if (commands.get(0).equalsIgnoreCase("lrange")) {
           String name = commands.get(1);
           int start = Integer.parseInt(commands.get(2));
           int end = Integer.parseInt(commands.get(3));
-          if (!lists.containsKey(name)) {
-            out.write("*0\r\n".getBytes());
+          List<String> list = lists.get(name);
+          if (list == null || list.isEmpty()) {
+            out.write("*0\r\n".getBytes(StandardCharsets.US_ASCII));
           } else {
-            List<String> list = lists.get(name);
             start = Math.max(start, -list.size());
             end = Math.max(end, -list.size());
             start = Math.min(start, list.size() - 1);
             end = Math.min(end, list.size() - 1);
             start = (start + list.size()) % list.size();
             end = (end + list.size()) % list.size();
+
             if (start >= list.size() || start > end) {
-              out.write("*0\r\n".getBytes());
+              out.write("*0\r\n".getBytes(StandardCharsets.US_ASCII));
             } else {
               int len = end - start + 1;
-              out.write(("*" + Integer.toString(len) + "\r\n").getBytes());
+              out.write(("*" + len + "\r\n").getBytes(StandardCharsets.US_ASCII));
               for (int i = start; i <= end; i++) {
                 String str = list.get(i);
-                out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
-                out.write((str + "\r\n").getBytes());
+                byte[] data = str.getBytes(StandardCharsets.UTF_8);
+                out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+                out.write(data);
+                out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
               }
             }
           }
-        } else if (commands.get(0).equalsIgnoreCase("lpush")) {
-          List<String> entry = new ArrayList<>();
-          if (lists.containsKey(commands.get(1))) {
-            entry = lists.get(commands.get(1));
-          }
-          for (int i = 2; i < commands.size(); i++) {
-            entry.add(0, commands.get(i));
-          }
-          lists.put(commands.get(1), entry);
-          int len = entry.size();
-          String p = Integer.toString(len);
-          out.write((":").getBytes());
-          out.write(p.getBytes());
-          out.write("\r\n".getBytes());
-        } else if (commands.get(0).equalsIgnoreCase("llen")) {
-          List<String> entry = new ArrayList<>();
-          if (lists.containsKey(commands.get(1))) {
-            entry = lists.get(commands.get(1));
-          }
-          int len = entry.size();
-          String p = Integer.toString(len);
-          out.write((":").getBytes());
-          out.write(p.getBytes());
-          out.write("\r\n".getBytes());
+
         } else if (commands.get(0).equalsIgnoreCase("lpop")) {
-          if (!lists.containsKey(commands.get(1))) {
-            out.write("$-1\r\n".getBytes());
+          String name = commands.get(1);
+          List<String> list = lists.get(name);
+          if (list == null || list.isEmpty()) {
+            out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
           } else {
             if (commands.size() > 2) {
-              int count = Integer.parseInt(commands.get(2));
-              count = Math.min(count, lists.get(commands.get(1)).size());
+              int count = Math.min(Integer.parseInt(commands.get(2)), list.size());
               List<String> response = new ArrayList<>();
-              while (count > 0) {
-                response.add(lists.get(commands.get(1)).get(0));
-                lists.get(commands.get(1)).remove(0);
-                count--;
+              while (count-- > 0) {
+                response.add(list.remove(0));
               }
-              out.write(("*" + response.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
+              respArray(out, response);
+            } else {
+              String str = list.remove(0);
+              byte[] data = str.getBytes(StandardCharsets.UTF_8);
+              out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+              out.write(data);
+              out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+            }
+          }
 
-              for (String s : response) {
-                if (s == null) {
-                  out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
-                } else {
-                  byte[] data = s.getBytes(StandardCharsets.UTF_8);
-                  out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
-                  out.write(data);
-                  out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+        } else if (commands.get(0).equalsIgnoreCase("blpop")) {
+          final String key = commands.get(1);
+          final long timeoutSecs = Long.parseLong(commands.get(2)); // 0 => block forever
+          final long deadline = (timeoutSecs == 0)
+              ? Long.MAX_VALUE
+              : System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(timeoutSecs);
+
+          String popped = null;
+          boolean timedOut = false;
+
+          synchronized (lock) {
+            List<String> list = lists.get(key);
+            if (list != null && !list.isEmpty()) {
+              popped = list.remove(0);
+            } else {
+              Waiter me = new Waiter(client, out, key);
+              waitersByKey.computeIfAbsent(key, k -> new ArrayDeque<>()).addLast(me);
+
+              for (;;) {
+                long remaining = (timeoutSecs == 0) ? Long.MAX_VALUE : (deadline - System.nanoTime());
+                if (remaining <= 0L) {
+                  Deque<Waiter> q = waitersByKey.get(key);
+                  if (q != null)
+                    q.remove(me);
+                  timedOut = true;
+                  break;
+                }
+                long ms = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(remaining);
+                int ns = (int) (remaining - java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(ms));
+                try {
+                  lock.wait((timeoutSecs == 0) ? 0 : ms, (timeoutSecs == 0) ? 0 : ns);
+                } catch (InterruptedException ie) {
+                  Thread.currentThread().interrupt();
+                  Deque<Waiter> q = waitersByKey.get(key);
+                  if (q != null)
+                    q.remove(me);
+                  timedOut = true;
+                  break;
+                }
+                Deque<Waiter> q = waitersByKey.get(key);
+                list = lists.get(key);
+                if (q != null && q.peekFirst() == me && list != null && !list.isEmpty()) {
+                  q.pollFirst();
+                  popped = list.remove(0);
+                  break;
                 }
               }
-            } else {
-              String str = lists.get(commands.get(1)).get(0);
-              lists.get(commands.get(1)).remove(0);
-              out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
-              out.write((str + "\r\n").getBytes());
             }
+          }
+
+          if (popped != null) {
+            writeRespArray(out, java.util.List.of(key, popped));
+          } else if (timedOut) {
+            out.write("*-1\r\n".getBytes(StandardCharsets.US_ASCII));
           }
         }
       }
     } catch (IOException ignored) {
     } finally {
-      client.close();
+      try {
+        client.close();
+      } catch (IOException ignore) {
+      }
+    }
+  }
+
+  static void respArray(OutputStream out, List<String> response) throws IOException {
+    out.write(("*" + response.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
+    for (String s : response) {
+      if (s == null) {
+        out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
+      } else {
+        byte[] data = s.getBytes(StandardCharsets.UTF_8);
+        out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+        out.write(data);
+        out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+      }
+    }
+  }
+
+  static void writeRespArray(OutputStream out, List<String> items) throws IOException {
+    out.write(("*" + items.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
+    for (String s : items) {
+      byte[] data = s.getBytes(StandardCharsets.UTF_8);
+      out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+      out.write(data);
+      out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
     }
   }
 }
