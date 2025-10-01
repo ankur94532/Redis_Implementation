@@ -418,6 +418,13 @@ public class Main {
             Thread.currentThread().interrupt();
             return;
           } finally {
+            if (!streams.containsKey(key)) {
+              try {
+                out.write("*-1\r\n".getBytes());
+                return;
+              } catch (IOException e) {
+              }
+            }
             int count = 0;
             HashMap<String, HashMap<String, String>> entries = streams.get(key);
             for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
