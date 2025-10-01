@@ -6,14 +6,10 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,6 +29,7 @@ public class Main {
   static final Map<String, ArrayDeque<Waiter>> waitersByKey = new HashMap<>();
   static HashMap<String, HashMap<String, HashMap<String, String>>> streams = new HashMap<>();
   static final Object lock = new Object();
+  static HashMap<String, Object> locks = new HashMap<>();
 
   static final class Waiter {
     final Socket client;
@@ -362,6 +359,9 @@ public class Main {
           out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
           out.write(b);
           out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+          if (locks.containsKey(commands.get(1))) {
+            locks.get(commands.get(1)).notifyAll();
+          }
         } else if (commands.get(0).equalsIgnoreCase("xrange")) {
           if (commands.get(2).equals("-")) {
             commands.set(2, "0-0");
@@ -378,8 +378,10 @@ public class Main {
           }
           findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
-          // out.write(("*1\r\n").getBytes());
-          System.out.println("*1\r\n");
+          if (commands.get(1).equals("BLOCK")) {
+            readBlock(Long.parseLong(commands.get(2)), commands.get(4), commands.get(5), out);
+            continue;
+          }
           int len = (commands.size() - 2) / 2;
           out.write(("*" + len + "\r\n").getBytes());
           System.out.println("*" + len + "\r\n");
@@ -395,6 +397,51 @@ public class Main {
       } catch (IOException ignore) {
       }
     }
+  }
+
+  static void readBlock(Long timeout, String key, String start, OutputStream out) {
+    if (timeout == 0) {
+      timeout = 10000000000000L;
+    }
+    Instant later = Instant.now().plusMillis(timeout);
+    Object keyLock = new Object();
+    if (locks.containsKey(key)) {
+      keyLock = locks.get(key);
+    }
+    locks.put(key, keyLock);
+    Thread worker = new Thread(() -> {
+      synchronized (lock) {
+        while (Instant.now().isBefore(later)) {
+          try {
+            lock.wait();
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+          } finally {
+            int count = 0;
+            HashMap<String, HashMap<String, String>> entries = streams.get(key);
+            for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
+              if (checkRange(it.getKey(), start)) {
+                count++;
+                break;
+              }
+            }
+            if (count == 0) {
+              try {
+                out.write("*-1\r\n".getBytes());
+              } catch (IOException e) {
+              }
+            } else {
+              try {
+                readRange(key, start, out);
+              } catch (IOException e) {
+              }
+            }
+          }
+        }
+      }
+    });
+    worker.start();
   }
 
   static void readRange(String id, String start,
