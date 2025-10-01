@@ -380,6 +380,7 @@ public class Main {
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
           out.write(("*1\r\n").getBytes());
           int len = (commands.size() - 2) / 2;
+          System.out.println(len);
           out.write(("*" + len + "\r\n").getBytes());
           for (int i = 2; i < 2 + len; i++) {
             readRange(commands.get(i), commands.get(i + len), out);
