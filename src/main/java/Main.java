@@ -151,12 +151,13 @@ public class Main {
             List<String> list = lists.get(name);
             start = Math.max(start, -list.size());
             end = Math.max(end, -list.size());
+            start = Math.min(start, list.size() - 1);
+            end = Math.min(end, list.size() - 1);
             start = (start + list.size()) % list.size();
             end = (end + list.size()) % list.size();
             if (start >= list.size() || start > end) {
               out.write("*0\r\n".getBytes());
             } else {
-              end = Math.min(end, list.size() - 1);
               int len = end - start + 1;
               out.write(("*" + Integer.toString(len) + "\r\n").getBytes());
               for (int i = start; i <= end; i++) {
