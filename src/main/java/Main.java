@@ -385,7 +385,7 @@ public class Main {
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
           if (commands.get(1).equalsIgnoreCase("BLOCK")) {
             if (commands.size() == 5) {
-              readBlock(Long.parseLong(commands.get(2)), commands.get(4), "0-0", out);
+              readBlock(Long.parseLong(commands.get(2)), commands.get(4), getLastStart(commands.get(2)), out);
               continue;
             }
             readBlock(Long.parseLong(commands.get(2)), commands.get(4), commands.get(5), out);
@@ -406,6 +406,15 @@ public class Main {
       } catch (IOException ignore) {
       }
     }
+  }
+
+  static String getLastStart(String key) {
+    String response = "0-0";
+    HashMap<String, HashMap<String, String>> entries = streams.get(key);
+    for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
+      response = it.getKey();
+    }
+    return response;
   }
 
   static void readBlock(long timeoutMs, String key, String start, OutputStream out) throws IOException {
