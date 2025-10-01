@@ -410,9 +410,11 @@ public class Main {
 
   static String getLastStart(String key) {
     String response = "0-0";
-    HashMap<String, HashMap<String, String>> entries = streams.get(key);
-    for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
-      response = it.getKey();
+    if (streams.containsKey(key)) {
+      HashMap<String, HashMap<String, String>> entries = streams.get(key);
+      for (Map.Entry<String, HashMap<String, String>> it : entries.entrySet()) {
+        response = it.getKey();
+      }
     }
     return response;
   }
