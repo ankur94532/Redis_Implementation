@@ -357,7 +357,8 @@ public class Main {
     String[] input1 = last.split("-");
     String[] input2 = id.split("-");
     Long a = Long.parseLong(input1[0]);
-    Long b = Long.parseLong(input1[0]);
+    Long b = Long.parseLong(input2[0]);
+    System.out.println(a + " " + b);
     if (b < a) {
       return true;
     }
