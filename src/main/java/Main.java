@@ -209,11 +209,16 @@ public class Main {
                 lists.get(commands.get(1)).remove(0);
                 count--;
               }
-              System.out.println(response.size());
-              for (int i = 0; i < response.size(); i++) {
-                String str = response.get(i);
-                out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
-                out.write((str + "\r\n").getBytes());
+              out.write(("*" + response.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
+              for (String s : response) {
+                if (s == null) {
+                  out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
+                } else {
+                  byte[] data = s.getBytes(StandardCharsets.UTF_8);
+                  out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+                  out.write(data);
+                  out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+                }
               }
             } else {
               String str = lists.get(commands.get(1)).get(0);
