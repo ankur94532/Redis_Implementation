@@ -8,9 +8,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.Instant;
+
+class Key {
+  public String value;
+  public Instant time;
+
+  public Key(String value, Instant time) {
+    this.value = value;
+    this.time = time;
+  }
+}
 
 public class Main {
-  static Map<String, String> entries = new HashMap<>();
+  static Map<String, Key> entries = new HashMap<>();
 
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
@@ -71,14 +82,25 @@ public class Main {
         } else if (commands.get(0).equalsIgnoreCase("ping")) {
           out.write("+PONG\r\n".getBytes());
         } else if (commands.get(0).equalsIgnoreCase("set")) {
-          entries.put(commands.get(1), commands.get(2));
-          out.write("+OK\r\n".getBytes());
+          if (commands.size() > 3) {
+            Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
+            entries.put(commands.get(1), key);
+          } else {
+            Key key = new Key(commands.get(2), Instant.now().plusMillis(1000000000));
+            entries.put(commands.get(1), key);
+          }
         } else if (commands.get(0).equalsIgnoreCase("get")) {
           if (entries.containsKey(commands.get(1))) {
-            String p = entries.get(commands.get(1));
-            out.write(("$" + p.length() + "\r\n").getBytes());
-            out.write(p.getBytes());
-            out.write("\r\n".getBytes());
+            Key key = entries.get(commands.get(1));
+            if (Instant.now().isBefore(key.time)) {
+              entries.remove(commands.get(1));
+              out.write("$-1\r\n".getBytes());
+            } else {
+              String p = entries.get(commands.get(1)).value;
+              out.write(("$" + p.length() + "\r\n").getBytes());
+              out.write(p.getBytes());
+              out.write("\r\n".getBytes());
+            }
           } else {
             out.write("$-1\r\n".getBytes());
           }
