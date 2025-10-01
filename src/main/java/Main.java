@@ -416,6 +416,7 @@ public class Main {
         response = it.getKey();
       }
     }
+    System.out.println(response);
     return response;
   }
 
