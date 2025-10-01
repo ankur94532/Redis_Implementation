@@ -78,11 +78,13 @@ public class Main {
         }
         List<String> commands = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
+        boolean first = false;
         for (int i = used; i < used + n;) {
-          if (i == 0 && buf[i] == '*') {
+          if (!first && buf[i] == '*') {
             i++;
             while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
               i++;
+            first = true;
             continue;
           }
           if (buf[i] == '$') {
