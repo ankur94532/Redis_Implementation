@@ -96,7 +96,7 @@ public class Main {
           if ((buf[i] >= 'A' && buf[i] <= 'Z') ||
               (buf[i] >= 'a' && buf[i] <= 'z') ||
               (buf[i] >= '0' && buf[i] <= '9') ||
-              buf[i] == '-') {
+              buf[i] == '-' || buf[i] == '.') {
             sb.append((char) buf[i]);
           }
           i++;
