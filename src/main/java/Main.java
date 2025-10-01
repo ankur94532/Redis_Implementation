@@ -400,7 +400,7 @@ public class Main {
       }
     }
     out.write(("*1\r\n").getBytes());
-    out.write(("*" + (keys.size() + 1) + id + "\r\n").getBytes());
+    out.write(("*" + (keys.size() + 1) + "\r\n" + id + "\r\n").getBytes());
     for (String key : keys) {
       HashMap<String, String> entry = entries.get(key);
       int len = 2 * entry.size();
