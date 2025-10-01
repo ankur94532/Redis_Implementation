@@ -132,6 +132,11 @@ public class Main {
             entry.add(commands.get(2));
             lists.put(commands.get(1), entry);
           }
+          int len = lists.get(commands.get(1)).size();
+          String p = Integer.toString(len);
+          out.write(("$" + p.length() + "\r\n").getBytes());
+          out.write(p.getBytes());
+          out.write("\r\n".getBytes());
         }
       }
     } catch (IOException ignored) {
