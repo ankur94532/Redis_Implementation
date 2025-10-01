@@ -367,6 +367,7 @@ public class Main {
     }
     a = Long.parseLong(input1[1]);
     b = Long.parseLong(input2[1]);
+    System.out.println(a + " " + b);
     if (b > a) {
       return true;
     }
