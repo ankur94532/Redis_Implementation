@@ -314,6 +314,17 @@ public class Main {
             out.write(("+none\r\n").getBytes());
           }
         } else if (commands.get(0).equalsIgnoreCase("xadd")) {
+          if (commands.get(2).equals("*")) {
+            commands.set(2, generateUnixId());
+          } else if (commands.get(2).split("-")[1].equals("*")) {
+            String ids[] = commands.get(2).split("-");
+            ids[1] = generateSeq(commands.get(1), ids[0]);
+            StringBuilder builder = new StringBuilder();
+            builder.append(ids[0]);
+            builder.append("-");
+            builder.append(ids[1]);
+            commands.set(2, builder.toString());
+          }
           if (check_0(commands.get(2))) {
             out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
             continue;
@@ -342,6 +353,32 @@ public class Main {
         client.close();
       } catch (IOException ignore) {
       }
+    }
+  }
+
+  static String generateUnixId() {
+    StringBuilder sb = new StringBuilder();
+    long currentUnixTimeMillis = System.currentTimeMillis();
+    sb.append(Long.toString(currentUnixTimeMillis));
+    sb.append("-");
+    sb.append("0");
+    return sb.toString();
+  }
+
+  static String generateSeq(String key, String id) {
+    if (streams.containsKey(key)) {
+      String last = streams.get(key).getLast();
+      if (last.split("-")[0].equals(id)) {
+        long k = Long.parseLong(last.split("-")[1]);
+        k++;
+        return Long.toString(k);
+      }
+      return "0";
+    } else {
+      if (id.equals("0")) {
+        return "1";
+      }
+      return "0";
     }
   }
 
