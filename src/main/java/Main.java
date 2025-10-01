@@ -181,6 +181,16 @@ public class Main {
           out.write((":").getBytes());
           out.write(p.getBytes());
           out.write("\r\n".getBytes());
+        } else if (commands.get(0).equalsIgnoreCase("llen")) {
+          List<String> entry = new ArrayList<>();
+          if (lists.containsKey(commands.get(1))) {
+            entry = lists.get(commands.get(1));
+          }
+          int len = entry.size();
+          String p = Integer.toString(len);
+          out.write((":").getBytes());
+          out.write(p.getBytes());
+          out.write("\r\n".getBytes());
         }
       }
     } catch (IOException ignored) {
