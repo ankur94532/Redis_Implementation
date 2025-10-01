@@ -191,6 +191,15 @@ public class Main {
           out.write((":").getBytes());
           out.write(p.getBytes());
           out.write("\r\n".getBytes());
+        } else if (commands.get(0).equalsIgnoreCase("lpop")) {
+          if (!lists.containsKey(commands.get(1))) {
+            out.write("$-1\r\n".getBytes());
+          } else {
+            String str = lists.get(commands.get(1)).get(0);
+            lists.get(commands.get(1)).remove(0);
+            out.write(("$" + Integer.toString(str.length()) + "\r\n").getBytes());
+            out.write((str + "\r\n").getBytes());
+          }
         }
       }
     } catch (IOException ignored) {
