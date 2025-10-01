@@ -379,7 +379,7 @@ public class Main {
           }
           findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
-          if (commands.get(1).equals("BLOCK")) {
+          if (commands.get(1).equalsIgnoreCase("BLOCK")) {
             readBlock(Long.parseLong(commands.get(2)), commands.get(4), commands.get(5), out);
             continue;
           }
@@ -401,7 +401,6 @@ public class Main {
   }
 
   static void readBlock(long timeoutMs, String key, String start, OutputStream out) throws IOException {
-    System.out.println("hi");
     final boolean waitForever = timeoutMs <= 0;
     final long deadline = waitForever
         ? Long.MAX_VALUE
