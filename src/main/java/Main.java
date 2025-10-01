@@ -378,7 +378,7 @@ public class Main {
           }
           findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
-          readRange(commands.get(1), commands.get(2), out);
+          readRange(commands.get(2), commands.get(3), out);
         }
       }
     } catch (IOException ignored) {
@@ -468,7 +468,7 @@ public class Main {
     if (x1 < x2) {
       return false;
     }
-    if (x1 == x2 && y1 < y2) {
+    if (x1 == x2 && y1 <= y2) {
       return false;
     }
     return true;
