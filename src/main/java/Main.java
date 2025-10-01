@@ -314,10 +314,12 @@ public class Main {
             out.write(("+none\r\n").getBytes());
           }
         } else if (commands.get(0).equalsIgnoreCase("xadd")) {
+          for (String command : commands) {
+            System.out.println(command);
+          }
           if (commands.get(2).equals("*")) {
             commands.set(2, generateUnixId());
           } else if (commands.get(2).split("-")[1].equals("*")) {
-            System.out.println("hi");
             String ids[] = commands.get(2).split("-");
             ids[1] = generateSeq(commands.get(1), ids[0]);
             StringBuilder builder = new StringBuilder();
