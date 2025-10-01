@@ -95,9 +95,11 @@ public class Main {
         if (sb.length() > 0) {
           commands.add(sb.toString());
         }
-        for (String command : commands) {
-          System.out.println(command);
-        }
+        /*
+         * for (String command : commands) {
+         * System.out.println(command);
+         * }
+         */
         used += n;
         if (commands.get(0).equalsIgnoreCase("echo")) {
           String p = commands.get(1);
@@ -199,7 +201,7 @@ public class Main {
             out.write("$-1\r\n".getBytes());
           } else {
             if (commands.size() > 1) {
-              int count = Integer.parseInt(commands.get(1));
+              int count = Integer.parseInt(commands.get(2));
               count = Math.min(count, lists.get(commands.get(0)).size());
               List<String> response = new ArrayList<>();
               while (count > 0) {
