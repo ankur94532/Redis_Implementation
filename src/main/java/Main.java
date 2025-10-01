@@ -400,44 +400,46 @@ public class Main {
     }
   }
 
-  static void readBlock(Long timeout, String key, String start, OutputStream out) {
-    if (timeout == 0) {
-      timeout = 10000000000000L;
-    }
-    Instant deadline = Instant.now().plusMillis(timeout);
-    final Object keyLock = locks.getOrDefault(key, new Object());
-    locks.put(key, keyLock);
-    Thread worker = new Thread(() -> {
-      synchronized (keyLock) {
-        for (;;) {
-          if (check(key, start)) {
-            long remNanos = Duration.between(Instant.now(), deadline).toNanos();
-            long ms = remNanos / 1_000_000L;
-            int ns = (int) (remNanos % 1_000_000L);
-            try {
-              keyLock.wait(ms, ns);
-            } catch (InterruptedException ie) {
-              Thread.currentThread().interrupt();
-              break;
-            }
-          } else {
+  static void readBlock(long timeoutMs, String key, String start, OutputStream out) throws IOException {
+    final boolean waitForever = timeoutMs <= 0;
+    final long deadline = waitForever
+        ? Long.MAX_VALUE
+        : System.nanoTime() + java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+
+    final Object keyLock = locks.computeIfAbsent(key, k -> new Object());
+    boolean hasData;
+
+    synchronized (keyLock) {
+      while (check(key, start)) {
+        if (waitForever) {
+          try {
+            keyLock.wait();
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+        } else {
+          long remaining = deadline - System.nanoTime();
+          if (remaining <= 0L)
+            break;
+          long ms = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(remaining);
+          int ns = (int) (remaining - java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(ms));
+          try {
+            keyLock.wait(ms, ns);
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
             break;
           }
         }
-        if (check(key, start)) {
-          try {
-            out.write("*-1\r\n".getBytes());
-          } catch (IOException e) {
-          }
-        } else {
-          try {
-            readRange(key, start, out);
-          } catch (IOException e) {
-          }
-        }
       }
-    });
-    worker.start();
+      hasData = !check(key, start);
+    }
+
+    if (hasData) {
+      readRange(key, start, out);
+    } else {
+      out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+    }
   }
 
   static boolean check(String id, String start) {
