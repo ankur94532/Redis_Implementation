@@ -87,6 +87,9 @@ public class Main {
           if (buf[i] >= 48 && buf[i] <= 57) {
             sb.append((char) buf[i]);
           }
+          if (buf[i] == 45) {
+            sb.append((char) buf[i]);
+          }
           i++;
         }
         if (sb.length() > 0) {
@@ -148,7 +151,6 @@ public class Main {
             List<String> list = lists.get(name);
             start = (start + list.size()) % list.size();
             end = (end + list.size()) % list.size();
-            System.out.println(start + " " + end);
             if (start >= list.size() || start > end) {
               out.write("*0\r\n".getBytes());
             } else {
