@@ -303,8 +303,7 @@ public class Main {
             out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
           }
 
-        } else if (commands.get(0).equals("type")) {
-          System.out.println("hi");
+        } else if (commands.get(0).equalsIgnoreCase("type")) {
           if (entries.containsKey(commands.get(1))) {
             out.write(("+string\r\n").getBytes());
           } else {
