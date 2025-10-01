@@ -401,6 +401,7 @@ public class Main {
   }
 
   static void readBlock(long timeoutMs, String key, String start, OutputStream out) throws IOException {
+    System.out.println("hi");
     final boolean waitForever = timeoutMs <= 0;
     final long deadline = waitForever
         ? Long.MAX_VALUE
