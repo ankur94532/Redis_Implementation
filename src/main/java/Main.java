@@ -403,6 +403,10 @@ public class Main {
   }
 
   static void readBlock(long timeoutMs, String key, String start, OutputStream out) throws IOException {
+    if (start.equals("$")) {
+      long currentUnixTimeMillis = System.currentTimeMillis();
+      start = Long.toString(currentUnixTimeMillis) + "-0";
+    }
     final boolean waitForever = timeoutMs <= 0;
     final long deadline = waitForever
         ? Long.MAX_VALUE
