@@ -57,6 +57,10 @@ public class Main {
         List<String> commands = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         for (int i = used; i < used + n;) {
+          if (buf[i] == '*') {
+            i += 2;
+            continue;
+          }
           if (buf[i] == '$') {
             if (sb.length() > 0) {
               commands.add(sb.toString());
