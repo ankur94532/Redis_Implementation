@@ -202,11 +202,11 @@ public class Main {
           } else {
             if (commands.size() > 1) {
               int count = Integer.parseInt(commands.get(2));
-              count = Math.min(count, lists.get(commands.get(0)).size());
+              count = Math.min(count, lists.get(commands.get(1)).size());
               List<String> response = new ArrayList<>();
               while (count > 0) {
-                response.add(lists.get(commands.get(0)).get(0));
-                lists.get(commands.get(0)).remove(0);
+                response.add(lists.get(commands.get(1)).get(0));
+                lists.get(commands.get(1)).remove(0);
                 count--;
               }
               for (int i = 0; i < response.size(); i++) {
