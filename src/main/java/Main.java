@@ -249,7 +249,7 @@ public class Main {
           final long deadline = waitForever
               ? Long.MAX_VALUE
               : System.nanoTime() + secsToNanos(timeoutSecsD);
-
+          System.out.println(secsToNanos(timeoutSecsD));
           String popped = null;
           boolean timedOut = false;
 
