@@ -385,8 +385,7 @@ public class Main {
         } else if (commands.get(0).equalsIgnoreCase("xread")) {
           if (commands.get(1).equalsIgnoreCase("BLOCK")) {
             if (commands.size() == 5) {
-              readBlock(Long.parseLong(commands.get(2)), commands.get(4),
-                  Long.toString(System.currentTimeMillis()) + "-0", out);
+              readBlock(Long.parseLong(commands.get(2)), commands.get(4), "0-0", out);
               continue;
             }
             readBlock(Long.parseLong(commands.get(2)), commands.get(4), commands.get(5), out);
