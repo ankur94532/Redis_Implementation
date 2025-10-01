@@ -80,6 +80,9 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         boolean first = false;
         boolean second = false;
+        for (int i = used; i < used + n; i++) {
+          System.out.println(buf[i]);
+        }
         for (int i = used; i < used + n;) {
           if (!first && buf[i] == '*') {
             i++;
@@ -88,7 +91,7 @@ public class Main {
             first = true;
             continue;
           }
-          if (!second && buf[i] == '$') {
+          if (buf[i] == '$') {
             if (sb.length() > 0) {
               commands.add(sb.toString());
               sb.setLength(0);
