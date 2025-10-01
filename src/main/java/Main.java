@@ -352,10 +352,10 @@ public class Main {
             }
           }
           HashMap<String, String> entries = new HashMap<>();
-          for (int i = 2; i < commands.size(); i += 2) {
+          for (int i = 3; i < commands.size(); i += 2) {
             entries.put(commands.get(i), commands.get(i + 1));
           }
-          newEntries.put(commands.get(1), entries);
+          newEntries.put(commands.get(2), entries);
           streams.put(commands.get(1), newEntries);
           String p = commands.get(2);
           byte[] b = p.getBytes(StandardCharsets.UTF_8);
