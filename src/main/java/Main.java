@@ -58,7 +58,10 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         for (int i = used; i < used + n;) {
           if (buf[i] == '*') {
-            i += 2;
+            i++;
+            while (i < used + n && buf[i] >= 48 && buf[i] <= 57) {
+              i++;
+            }
             continue;
           }
           if (buf[i] == '$') {
@@ -86,9 +89,6 @@ public class Main {
         if (sb.length() > 0) {
           commands.add(sb.toString());
         }
-        for (String str : commands) {
-          System.out.println(str);
-        }
         used += n;
         if (commands.get(0).equalsIgnoreCase("echo")) {
           String p = commands.get(1);
@@ -109,7 +109,7 @@ public class Main {
         } else if (commands.get(0).equalsIgnoreCase("get")) {
           if (entries.containsKey(commands.get(1))) {
             Key key = entries.get(commands.get(1));
-            if (Instant.now().isBefore(key.time)) {
+            if (Instant.now().isAfter(key.time)) {
               entries.remove(commands.get(1));
               out.write("$-1\r\n".getBytes());
             } else {
