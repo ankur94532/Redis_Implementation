@@ -436,6 +436,7 @@ public class Main {
     }
 
     if (hasData) {
+      out.write(("*1\r\n").getBytes());
       readRange(key, start, out);
     } else {
       out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
