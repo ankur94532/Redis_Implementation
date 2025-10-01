@@ -408,7 +408,7 @@ public class Main {
 
     final Object keyLock = locks.computeIfAbsent(key, k -> new Object());
     boolean hasData;
-
+    System.out.println(waitForever);
     synchronized (keyLock) {
       while (check(key, start)) {
         if (waitForever) {
