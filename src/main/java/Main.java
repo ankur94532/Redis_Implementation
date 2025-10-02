@@ -125,6 +125,7 @@ public class Main {
             out.write("*0\r\n".getBytes());
             continue;
           }
+          out.write(("*" + queueCommands.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
           while (queueCommands.size() > 0) {
             execute(out, queueCommands.peekFirst(), client);
             queueCommands.pollFirst();
