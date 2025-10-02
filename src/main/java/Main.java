@@ -81,6 +81,9 @@ public class Main {
         Socket c = srv.accept();
         new Thread(() -> {
           try {
+            if (args.length == 0) {
+              System.out.println("normal thread here");
+            }
             handleClient(c, port);
           } catch (Exception ignore) {
           } finally {
@@ -96,7 +99,6 @@ public class Main {
 
   // ---- Client handler ----
   static void handleClient(Socket c, int myPort) throws Exception {
-    System.out.println(c.getLocalPort() + " " + port + " " + masterPort);
     initialSyncDone.await();
     c.setTcpNoDelay(true);
     InputStream in = c.getInputStream();
