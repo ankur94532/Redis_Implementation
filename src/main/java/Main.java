@@ -89,11 +89,15 @@ public class Main {
           k = masterSock.getInputStream().read(buf, k, buf.length - k);
           List<String> commands = new ArrayList<>();
           StringBuilder sb = new StringBuilder();
-          for (int i = 0; i < k; i++) {
+          for (int i = 0; i < k;) {
             if (buf[i] == '*' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               if (sb.length() > 0) {
                 commands.add(sb.toString());
                 sb.setLength(0);
+              }
+              i++;
+              while (buf[i] >= 48 && buf[i] <= 57) {
+                i++;
               }
               masterCommands.add(commands);
               commands.clear();
@@ -101,6 +105,10 @@ public class Main {
               if (sb.length() > 0) {
                 commands.add(sb.toString());
                 sb.setLength(0);
+              }
+              i++;
+              while (buf[i] >= 48 && buf[i] <= 57) {
+                i++;
               }
             } else {
               sb.append((char) buf[i]);
