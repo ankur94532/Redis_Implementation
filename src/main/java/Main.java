@@ -96,7 +96,7 @@ public class Main {
 
   // ---- Client handler ----
   static void handleClient(Socket c, int myPort) throws Exception {
-    System.out.println(c.getLocalPort() + " " + masterPort);
+    System.out.println(c.getLocalPort() + " " + port + " " + masterPort);
     initialSyncDone.await();
     c.setTcpNoDelay(true);
     InputStream in = c.getInputStream();
