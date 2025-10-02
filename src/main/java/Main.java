@@ -121,8 +121,9 @@ public class Main {
             continue;
           }
           multi = false;
-          for (List<String> it : queueCommands) {
-            execute(out, it, client);
+          while (queueCommands.size() > 0) {
+            execute(out, queueCommands.peekFirst(), client);
+            queueCommands.pollFirst();
           }
           continue;
         }
