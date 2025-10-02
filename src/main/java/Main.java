@@ -123,6 +123,7 @@ public class Main {
       }
     }
     try {
+      System.out.println("hi");
       while (true) {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
