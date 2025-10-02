@@ -113,12 +113,12 @@ public class Main {
         }
       }
     }
-    System.out.println(masterCommands.size());
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
           try {
+            System.out.println(masterCommands.size());
             handle(clientSocket, masterCommands);
           } catch (IOException e) {
             e.printStackTrace();
