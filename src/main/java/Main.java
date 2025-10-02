@@ -149,11 +149,11 @@ public class Main {
         if (sb.length() > 0)
           commands.add(sb.toString());
         used += n;
-        /*
-         * for (String command : commands) {
-         * System.out.println(command);
-         * }
-         */
+
+        for (String command : commands) {
+          System.out.println(command);
+        }
+
         if (commands.get(0).equalsIgnoreCase("discard")) {
           if (!multi) {
             out.write("-ERR DISCARD without MULTI\r\n".getBytes());
