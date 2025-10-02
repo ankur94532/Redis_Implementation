@@ -49,8 +49,9 @@ public class Main {
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
     int port = 6379;
-    String env = System.getenv("PORT");
-    System.out.println(env);
+    for (String str : args) {
+      System.out.print(str + " ");
+    }
     ServerSocket serverSocket;
     if (servers.containsKey(port)) {
       serverSocket = servers.get(port);
