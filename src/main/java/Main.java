@@ -83,64 +83,49 @@ public class Main {
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
-          k = 0;
-          buf = new byte[8192];
-          k = masterSock.getInputStream().read(buf, k, buf.length - k);
-          List<String> commands = new ArrayList<>();
-          StringBuilder sb = new StringBuilder();
-          System.out.println("total length:" + k);
-          for (int i = 0; i < k; i++) {
-            System.out.println((char) buf[i]);
-          }
-          for (int i = 0; i < k;) {
-            if (buf[i] == '*' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
-              i++;
-              while (i < k && buf[i] >= 48 && buf[i] <= 57) {
+          k += masterSock.getInputStream().read(buf, k, buf.length - k);
+          int used = 0;
+          buf = new byte[8125];
+          InputStream in = masterSock.getInputStream();
+          while (true) {
+            int n = in.read(buf, used, buf.length - used);
+            if (n == -1) {
+              break;
+            }
+            List<String> commands = new ArrayList<>();
+            StringBuilder sb = new StringBuilder();
+            boolean first = false;
+            for (int i = used; i < used + n;) {
+              if (!first && buf[i] == '*') {
                 i++;
+                while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
+                  i++;
+                first = true;
+                continue;
               }
-            } else if (buf[i] == '$' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
-              i++;
-              while (i < k && buf[i] >= 48 && buf[i] <= 57) {
+              if (buf[i] == '$') {
+                if (sb.length() > 0) {
+                  commands.add(sb.toString());
+                  sb.setLength(0);
+                }
                 i++;
+                while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
+                  i++;
+                continue;
               }
-            } else if (buf[i] == '\r') {
-              i++;
-            } else if (buf[i] == '\n') {
-              if (i + 1 == k) {
-                if (sb.length() > 0) {
-                  commands.add(sb.toString());
-                }
-                if (commands.size() > 0) {
-                  masterCommands.add(commands);
-                }
-                break;
+              if ((buf[i] >= 'A' && buf[i] <= 'Z') ||
+                  (buf[i] >= 'a' && buf[i] <= 'z') ||
+                  (buf[i] >= '0' && buf[i] <= '9') ||
+                  buf[i] == '-' || buf[i] == '.' || buf[i] == '_' || buf[i] == '*' || buf[i] == '+') {
+                sb.append((char) buf[i]);
               }
-              if (buf[i + 1] == '*') {
-                if (sb.length() > 0) {
-                  commands.add(sb.toString());
-                }
-                if (commands.size() > 0) {
-                  masterCommands.add(commands);
-                }
-                sb.setLength(0);
-                masterCommands.clear();
-              } else if (buf[i + 1] == '$') {
-                if (sb.length() > 0) {
-                  commands.add(sb.toString());
-                }
-                sb.setLength(0);
-              }
-              i++;
-            } else {
-              sb.append((char) buf[i]);
               i++;
             }
             for (String str : commands) {
-              System.out.print(str + " ");
+              System.out.println(str);
             }
-            System.out.println();
+            execute(commands, masterSock);
           }
-          System.out.println("present length:" + masterCommands.size());
           mout.flush();
         }
       }
@@ -150,8 +135,7 @@ public class Main {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
           try {
-            System.out.println(masterCommands.size());
-            handle(clientSocket, masterCommands);
+            handle(clientSocket);
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -162,11 +146,8 @@ public class Main {
     }
   }
 
-  static void handle(Socket client, List<List<String>> masterCommands) throws IOException {
+  static void handle(Socket client) throws IOException {
     try {
-      for (int i = 0; i < masterCommands.size(); i++) {
-        execute(masterCommands.get(i), client);
-      }
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[8192];
