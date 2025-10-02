@@ -236,7 +236,6 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client) throws IOException {
-    System.out.println("hi");
     OutputStream out = client.getOutputStream();
     boolean isMaster = false;
     if (client.getLocalPort() == master) {
@@ -277,7 +276,6 @@ public class Main {
       out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
 
     } else if (commands.get(0).equalsIgnoreCase("set")) {
-      System.out.println("inside set" + commands.get(1) + " " + commands.get(2));
       if (commands.size() > 3) {
         Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
         entries.put(commands.get(1), key);
