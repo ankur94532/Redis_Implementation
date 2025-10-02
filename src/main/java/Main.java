@@ -143,6 +143,12 @@ public class Main {
               i++;
             }
           }
+          if (sb.length() > 0) {
+            commands.add(sb.toString());
+          }
+          if (commands.size() > 0) {
+            execute(commands, masterSock);
+          }
         }
       }
     }
