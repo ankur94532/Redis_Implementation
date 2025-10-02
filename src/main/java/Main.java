@@ -238,6 +238,7 @@ public class Main {
       out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
 
     } else if (commands.get(0).equalsIgnoreCase("set")) {
+      System.out.println("hlo");
       for (String cmd : commands) {
         System.out.println(cmd);
       }
