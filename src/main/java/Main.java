@@ -48,6 +48,7 @@ public class Main {
 
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
+    System.out.println(args);
     int port = 6379;
     if (args.length > 1) {
       port = Integer.parseInt(args[args.length - 1]);
