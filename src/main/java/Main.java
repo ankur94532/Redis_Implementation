@@ -115,7 +115,7 @@ public class Main {
          * System.out.println(command);
          * }
          */
-        if (commands.get(0).equalsIgnoreCase("queued")) {
+        if (commands.get(0).equalsIgnoreCase("exec")) {
           if (!multi) {
             out.write("-ERR EXEC without MULTI\r\n".getBytes());
             continue;
