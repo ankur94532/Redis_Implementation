@@ -36,8 +36,9 @@ public class Main {
   static final Object lock = new Object();
   static HashMap<String, Object> locks = new HashMap<>();
   static Map<Integer, ServerSocket> servers = new HashMap<>();
-  static Map<Integer, Set<Integer>> slaves = new HashMap<>();
+  static Map<Integer, Set<Socket>> slaves = new HashMap<>();
   static Map<Integer, Integer> masters = new HashMap<>();
+  static int port = 6379;
 
   static final class Waiter {
     final Socket client;
@@ -53,7 +54,6 @@ public class Main {
 
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
-    int port = 6379;
     if (args.length > 0) {
       port = Integer.parseInt(args[1]);
     }
@@ -68,13 +68,6 @@ public class Main {
     if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
         int master = Integer.parseInt(args[3].split(" ")[1]);
-        masters.put(port, master);
-        Set<Integer> slave = new HashSet<>();
-        if (slaves.containsKey(master)) {
-          slave = slaves.get(master);
-        }
-        slave.add(port);
-        slaves.put(master, slave);
         try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
           OutputStream mout = masterSock.getOutputStream();
           mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
@@ -214,6 +207,9 @@ public class Main {
           "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2");
       out.write(("$" + str.length + "\r\n").getBytes());
       out.write(str);
+      Set<Socket> slave = slaves.getOrDefault(port, new HashSet<>());
+      slave.add(client);
+      slaves.put(port, slave);
     } else if (commands.get(0).equalsIgnoreCase("REPLCONF")) {
       out.write("+OK\r\n".getBytes());
     } else if (commands.get(0).equalsIgnoreCase("info")) {
@@ -249,7 +245,6 @@ public class Main {
         entries.put(commands.get(1), key);
       }
       out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
-
     } else if (commands.get(0).equalsIgnoreCase("incr")) {
       if (!entries.containsKey(commands.get(1))) {
         Key key = new Key("1", Instant.now().plusMillis(1_000_000_000L));
@@ -528,6 +523,14 @@ public class Main {
       System.out.println("*" + len + "\r\n");
       for (int i = 2; i < 2 + len; i++) {
         readRange(commands.get(i), commands.get(i + len), out);
+      }
+    }
+    String str = commands.get(0);
+    if (str.equalsIgnoreCase("set") || str.equalsIgnoreCase("incr") || str.equalsIgnoreCase("rpush")
+        || str.equalsIgnoreCase("lpush") || str.equalsIgnoreCase("lpop") || str.equalsIgnoreCase("blpop")
+        || str.equalsIgnoreCase("xadd")) {
+      for (Socket socket : slaves.get(port)) {
+        respArray(socket.getOutputStream(), commands);
       }
     }
   }
