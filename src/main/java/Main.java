@@ -49,13 +49,8 @@ public class Main {
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
     int port = 6379;
-    if (System.console() != null) {
-      Scanner sc = new Scanner(System.in);
-      String input = sc.nextLine();
-      String[] inputs = input.split(" ");
-      port = Integer.parseInt(inputs[input.length() - 1]);
-      sc.close();
-    }
+    String env = System.getenv("PORT");
+    System.out.println(env);
     ServerSocket serverSocket;
     if (servers.containsKey(port)) {
       serverSocket = servers.get(port);
