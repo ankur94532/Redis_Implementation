@@ -65,6 +65,7 @@ public class Main {
       servers.put(port, serverSocket);
     }
     serverSocket.setReuseAddress(true);
+    int c = 0;
     if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
         master = Integer.parseInt(args[3].split(" ")[1]);
@@ -127,12 +128,14 @@ public class Main {
               }
               sb.setLength(0);
               if (i + 1 == used || buf[i + 1] == 42) {
+                c++;
                 Thread worker = new Thread(() -> {
                   try {
                     execute(commands, masterSock);
                   } catch (IOException e) {
                   }
                 });
+                c--;
                 worker.start();
                 try {
                   worker.join();
@@ -150,19 +153,21 @@ public class Main {
         }
       }
     }
-    try {
-      while (true) {
-        Socket clientSocket = serverSocket.accept();
-        new Thread(() -> {
-          try {
-            handle(clientSocket);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }).start();
+    if (c == 0) {
+      try {
+        while (true) {
+          Socket clientSocket = serverSocket.accept();
+          new Thread(() -> {
+            try {
+              handle(clientSocket);
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }).start();
+        }
+      } finally {
+        serverSocket.close();
       }
-    } finally {
-      serverSocket.close();
     }
   }
 
