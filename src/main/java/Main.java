@@ -38,12 +38,10 @@ public class Main {
   public static void main(String[] args) throws Exception {
     parseArgs(args);
 
-    // If we are a replica, connect to master and start replication reader
     if (isReplica) {
       startReplicaReplicationThread(masterHost, masterPort, port);
     }
 
-    // Server loop
     try (ServerSocket ss = new ServerSocket(port)) {
       ss.setReuseAddress(true);
       while (true) {
@@ -66,10 +64,10 @@ public class Main {
     OutputStream out = s.getOutputStream();
 
     for (;;) {
-      List<String> cmd = readRespArray(in); // blocks for one command
+      List<String> cmd = readRespArray(in);
       if (cmd == null)
-        break; // client closed
-      // Special handling when a replica connects to us (we are master)
+        break;
+
       if (!isReplica && isReplicaHandshakeCommand(cmd)) {
         processReplicaHandshakeCommand(cmd, s, out);
         continue;
@@ -80,15 +78,14 @@ public class Main {
 
   // ------------------ Execute command ------------------
   static void execute(List<String> cmd, OutputStream out, boolean fromMaster) throws IOException {
-    if (cmd.isEmpty())
+    if (cmd == null || cmd.isEmpty())
       return;
     String op = cmd.get(0).toUpperCase(Locale.ROOT);
 
     switch (op) {
       case "PING": {
-        if (!fromMaster) {
+        if (!fromMaster)
           out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
-        }
         return;
       }
       case "ECHO": {
@@ -105,7 +102,7 @@ public class Main {
         }
         return;
       }
-      case "INFO": { // handle: INFO or INFO REPLICATION
+      case "INFO": {
         if (!fromMaster) {
           if (isReplica) {
             byte[] body = "role:slave\r\n".getBytes(StandardCharsets.UTF_8);
@@ -131,21 +128,17 @@ public class Main {
           return;
         }
         String k = cmd.get(1), v = cmd.get(2);
-        // Optional PX/EX (very minimal): SET k v PX ms
-        Instant exp = Instant.ofEpochMilli(Long.MAX_VALUE);
+        Instant exp = Instant.now().plusMillis(1_000_000_000L); // long default
         if (cmd.size() >= 5 && (cmd.get(3).equalsIgnoreCase("PX") || cmd.get(3).equalsIgnoreCase("EX"))) {
           long dur = Long.parseLong(cmd.get(4));
           if (cmd.get(3).equalsIgnoreCase("EX"))
             dur *= 1000;
           exp = Instant.now().plusMillis(dur);
-        } else {
-          exp = Instant.now().plusMillis(1_000_000_000L); // large default (compat with your earlier code)
         }
         entries.put(k, new Key(v, exp));
 
         if (!fromMaster) {
           out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
-          // propagate to replicas
           propagateIfMaster(Arrays.asList("SET", k, v));
         }
         return;
@@ -201,9 +194,8 @@ public class Main {
         return;
       }
       default: {
-        if (!fromMaster) {
+        if (!fromMaster)
           out.write(("-ERR unknown command '" + cmd.get(0) + "'\r\n").getBytes(StandardCharsets.US_ASCII));
-        }
       }
     }
   }
@@ -227,11 +219,9 @@ public class Main {
         out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
         return;
       case "REPLCONF":
-        // We just ACK any REPLCONF in this exercise
         out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
         return;
       case "PSYNC":
-        // Send FULLRESYNC + fake RDB bulk
         out.write(("+FULLRESYNC " + REPL_ID + " 0\r\n").getBytes(StandardCharsets.US_ASCII));
         byte[] rdb = hex(
             "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2");
@@ -239,8 +229,6 @@ public class Main {
         out.write(rdb);
         out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
         out.flush();
-
-        // Keep this replica socket to stream future writes
         replicas.add(s);
         return;
     }
@@ -271,30 +259,69 @@ public class Main {
         // 4) PSYNC ? -1
         writeArray(out, Arrays.asList("PSYNC", "?", "-1"));
 
-        // 5) +FULLRESYNC ... \r\n
-        String full = readSimpleString(in); // e.g. FULLRESYNC <id> 0
+        // 5) FULLRESYNC line
+        readSimpleString(in); // +FULLRESYNC <id> 0
 
-        // 6) $<len>\r\n <rdb-bytes> \r\n
-        int len = readBulkLen(in);
-        readExactly(in, len); // discard RDB bytes
-        expectCRLF(in);
+        // 6) RDB: handle $<len> or $EOF:<sig>
+        readRdb(in);
 
-        // 7) continuous command stream (arrays)
+        // 7) continuous stream of commands
         for (;;) {
           List<String> cmd = readRespArray(in);
           if (cmd == null)
             break;
-          // Apply immediately; do not reply
-          execute(cmd, /* out */ nullStream(), /* fromMaster */ true);
+          execute(cmd, nullStream(), /* fromMaster */ true);
         }
       } catch (IOException e) {
-        // exit thread; harness will restart tests
+        // Exit thread; harness restarts per run
       } finally {
         closeQuiet(ms);
       }
     }, "replication-reader");
     t.setDaemon(true);
     t.start();
+  }
+
+  // Read RDB in either form: $<len>\r\n<bytes>\r\n OR
+  // $EOF:<40-hex>\r\n...<signature>
+  static void readRdb(InputStream in) throws IOException {
+    int sig = in.read();
+    if (sig != '$')
+      throw new IOException("Expected $ starting RDB payload");
+    String header = readLine(in); // after '$'
+    if (header.startsWith("EOF:")) {
+      byte[] signature = hex(header.substring(4));
+      int sigLen = signature.length;
+      // sliding window match on last sigLen bytes
+      byte[] window = new byte[sigLen];
+      int filled = 0;
+
+      byte[] buf = new byte[8192];
+      outer: for (;;) {
+        int n = in.read(buf);
+        if (n < 0)
+          throw new EOFException("EOF while reading EOF-style RDB");
+        for (int i = 0; i < n; i++) {
+          // shift left if not yet filled fully
+          if (filled < sigLen) {
+            window[filled++] = buf[i];
+          } else {
+            // shift 1 left
+            System.arraycopy(window, 1, window, 0, sigLen - 1);
+            window[sigLen - 1] = buf[i];
+          }
+          if (filled == sigLen && Arrays.equals(window, signature)) {
+            break outer; // done at signature boundary
+          }
+        }
+      }
+      // After EOF signature, Redis does not add CRLF. We are now at the start of
+      // command stream.
+    } else {
+      int len = Integer.parseInt(header);
+      readExactly(in, len);
+      expectCRLF(in); // RDB bulk has trailing CRLF in this mode
+    }
   }
 
   static OutputStream nullStream() {
@@ -327,13 +354,14 @@ public class Main {
       return null;
     if (start != '*')
       throw new IOException("Expected *");
-    int n = Integer.parseInt(readLine(in)); // number of elements
+    int n = Integer.parseInt(readLine(in));
     List<String> a = new ArrayList<>(n);
     for (int i = 0; i < n; i++) {
       int sig = in.read();
       if (sig != '$')
         throw new IOException("Expected $");
-      int len = Integer.parseInt(readLine(in));
+      String lenLine = readLine(in);
+      int len = Integer.parseInt(lenLine);
       byte[] data = readExactly(in, len);
       expectCRLF(in);
       a.add(new String(data, StandardCharsets.UTF_8));
@@ -372,14 +400,7 @@ public class Main {
     int sig = in.read();
     if (sig != '+')
       throw new IOException("Expected +");
-    return readLine(in); // returns content without CRLF
-  }
-
-  static int readBulkLen(InputStream in) throws IOException {
-    int sig = in.read();
-    if (sig != '$')
-      throw new IOException("Expected $");
-    return Integer.parseInt(readLine(in));
+    return readLine(in); // without CRLF
   }
 
   static String readLine(InputStream in) throws IOException {
@@ -436,24 +457,20 @@ public class Main {
   // ------------------ Args ------------------
   static void parseArgs(String[] args) {
     for (int i = 0; i < args.length; i++) {
-      switch (args[i]) {
-        case "--port":
-          if (i + 1 < args.length)
-            port = Integer.parseInt(args[++i]);
-          break;
-        case "--replicaof":
-          isReplica = true;
-          // accept either 2 separate args or a quoted single arg
-          if (i + 2 < args.length && !args[i + 1].contains(" ")) {
-            masterHost = args[++i];
-            masterPort = Integer.parseInt(args[++i]);
-          } else {
-            String joined = args[++i]; // e.g. "localhost 6379"
-            String[] hp = joined.split("\\s+");
-            masterHost = hp[0];
-            masterPort = Integer.parseInt(hp[1]);
-          }
-          break;
+      String a = args[i];
+      if ("--port".equals(a) && i + 1 < args.length) {
+        port = Integer.parseInt(args[++i]);
+      } else if ("--replicaof".equals(a) && i + 1 < args.length) {
+        isReplica = true;
+        String next = args[++i];
+        if (i + 1 < args.length && !next.contains(" ")) {
+          masterHost = next;
+          masterPort = Integer.parseInt(args[++i]);
+        } else {
+          String[] hp = next.split("\\s+");
+          masterHost = hp[0];
+          masterPort = Integer.parseInt(hp[1]);
+        }
       }
     }
   }
