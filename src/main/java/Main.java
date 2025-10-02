@@ -81,9 +81,7 @@ public class Main {
         Socket c = srv.accept();
         new Thread(() -> {
           try {
-            if (args.length == 0) {
-              System.out.println("normal thread here");
-            }
+            System.out.println(args.length);
             handleClient(c, port);
           } catch (Exception ignore) {
           } finally {
