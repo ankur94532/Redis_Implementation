@@ -253,6 +253,7 @@ public class Main {
       slave.add(client);
       slaves.put(port, slave);
     } else if (commands.get(0).equalsIgnoreCase("REPLCONF")) {
+      System.out.println("hi");
       if (commands.size() == 3 && commands.get(1).equals("GETACK") && commands.get(2).equals("*")) {
         out.write("*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n".getBytes());
         return;
