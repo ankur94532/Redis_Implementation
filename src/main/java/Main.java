@@ -93,6 +93,8 @@ public class Main {
             }
             used += n;
           }
+          int n = in.read(buf, used, buf.length - used);
+          used += n;
           int start = 0;
           for (int i = 0; i < used; i++) {
             if (buf[i] < 0) {
