@@ -116,6 +116,7 @@ public class Main {
                 i++;
               }
             }
+            used += k;
           }
         } catch (IOException e) {
         }
