@@ -115,6 +115,12 @@ public class Main {
          * System.out.println(command);
          * }
          */
+        if (commands.get(0).equalsIgnoreCase("discard")) {
+          multi = false;
+          queueCommands.clear();
+          out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
+          continue;
+        }
         if (commands.get(0).equalsIgnoreCase("exec")) {
           if (!multi) {
             out.write("-ERR EXEC without MULTI\r\n".getBytes());
