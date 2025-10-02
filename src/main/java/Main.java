@@ -89,9 +89,6 @@ public class Main {
           k = masterSock.getInputStream().read(buf, k, buf.length - k);
           List<String> commands = new ArrayList<>();
           StringBuilder sb = new StringBuilder();
-          for (int i = 0; i < k; i++) {
-            System.out.println(buf[i]);
-          }
           for (int i = 0; i < k;) {
             if (buf[i] == '*' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               if (sb.length() > 0) {
@@ -137,6 +134,7 @@ public class Main {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
           try {
+            System.out.println(masterCommands.size());
             handle(clientSocket, masterCommands);
           } catch (IOException e) {
             e.printStackTrace();
