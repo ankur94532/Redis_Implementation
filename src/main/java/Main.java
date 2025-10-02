@@ -113,6 +113,9 @@ public class Main {
               while (i < k && buf[i] >= 48 && buf[i] <= 57) {
                 i++;
               }
+            } else if (buf[i] == '\r' || buf[i] == '\n') {
+              i++;
+              continue;
             } else {
               sb.append((char) buf[i]);
               i++;
