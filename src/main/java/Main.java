@@ -99,7 +99,9 @@ public class Main {
               while (i < k && buf[i] >= 48 && buf[i] <= 57) {
                 i++;
               }
-              masterCommands.add(commands);
+              if (commands.size() > 0) {
+                masterCommands.add(commands);
+              }
               commands.clear();
             } else if (buf[i] == '$' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               if (sb.length() > 0) {
@@ -112,7 +114,6 @@ public class Main {
               }
             } else if (buf[i] == '\r' || buf[i] == '\n') {
               i++;
-              continue;
             } else {
               sb.append((char) buf[i]);
               i++;
