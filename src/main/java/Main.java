@@ -116,6 +116,10 @@ public class Main {
          * }
          */
         if (commands.get(0).equalsIgnoreCase("discard")) {
+          if (!multi) {
+            out.write("-ERR DISCARD without MULTI\r\n".getBytes());
+            continue;
+          }
           multi = false;
           queueCommands.clear();
           out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
