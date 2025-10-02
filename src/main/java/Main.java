@@ -59,7 +59,6 @@ public class Main {
     if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
         int master = Integer.parseInt(args[3].split(" ")[1]);
-        System.out.println(port + " " + master);
         masters.put(port, master);
         Set<Integer> slave = new HashSet<>();
         if (slaves.containsKey(master)) {
@@ -194,6 +193,7 @@ public class Main {
   static void execute(OutputStream out, List<String> commands, Socket client) throws IOException {
     if (commands.get(0).equalsIgnoreCase("info")) {
       int port = client.getPort();
+      System.out.println(port);
       if (masters.containsKey(port)) {
         out.write("$10\r\nrole:slave\r\n".getBytes());
       } else {
