@@ -112,6 +112,7 @@ public class Main {
                 sb.setLength(0);
                 if (i + 1 == used + k
                     || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
+                  System.out.println("hlo");
                   for (int ind : indices) {
                     System.out.print(ind + " ");
                   }
@@ -150,7 +151,6 @@ public class Main {
 
   static void handle(Socket client) throws IOException {
     try {
-      System.out.println("hi " + client.getLocalPort());
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[8192];
