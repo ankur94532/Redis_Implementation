@@ -65,6 +65,7 @@ public class Main {
       servers.put(port, serverSocket);
     }
     serverSocket.setReuseAddress(true);
+    List<List<String>> masterCommands = new ArrayList<>();
     if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
         master = Integer.parseInt(args[3].split(" ")[1]);
@@ -86,8 +87,26 @@ public class Main {
           k = 0;
           buf = new byte[8192];
           k = masterSock.getInputStream().read(buf, k, buf.length - k);
+          List<String> commands = new ArrayList<>();
+          StringBuilder sb = new StringBuilder();
           for (int i = 0; i < k; i++) {
-            System.out.println((char) buf[i]);
+            if (buf[i] == '*' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+              if (sb.length() > 0) {
+                commands.add(sb.toString());
+                sb.setLength(0);
+              }
+              masterCommands.add(commands);
+              commands.clear();
+            } else if (buf[i] == '$' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+              if (sb.length() > 0) {
+                commands.add(sb.toString());
+                sb.setLength(0);
+              }
+            }
+            sb.append((char) buf[i]);
+          }
+          if (commands.size() > 0) {
+            masterCommands.add(commands);
           }
           mout.flush();
         }
@@ -98,7 +117,7 @@ public class Main {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
           try {
-            handle(clientSocket);
+            handle(clientSocket, masterCommands);
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -109,9 +128,11 @@ public class Main {
     }
   }
 
-  static void handle(Socket client) throws IOException {
+  static void handle(Socket client, List<List<String>> masterCommands) throws IOException {
     try {
-      System.out.println("hey");
+      for (int i = 0; i < masterCommands.size(); i++) {
+        execute(masterCommands.get(i), client);
+      }
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[8192];
