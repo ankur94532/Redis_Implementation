@@ -77,11 +77,17 @@ public class Main {
         try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
           OutputStream mout = masterSock.getOutputStream();
           mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+          byte[] buf = new byte[8192];
+          int k = 0;
+          k += masterSock.getInputStream().read(buf, k, buf.length - k);
           String data = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port" + "\r\n$4\r\n" + Integer.toString(port)
               + "\r\n";
           mout.write(data.getBytes());
+          k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$3\r\neof\r\n".getBytes());
+          k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
+          k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.flush();
         }
       }
