@@ -137,6 +137,8 @@ public class Main {
           }
           out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
 
+        } else if (commands.get(0).equalsIgnoreCase("multi")) {
+          out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
         } else if (commands.get(0).equalsIgnoreCase("incr")) {
           if (!entries.containsKey(commands.get(1))) {
             Key key = new Key("1", Instant.now().plusMillis(1_000_000_000L));
