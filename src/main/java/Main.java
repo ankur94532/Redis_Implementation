@@ -77,12 +77,16 @@ public class Main {
 
     // ---- Server accept loop ----
     try (ServerSocket srv = new ServerSocket(port)) {
+      if (isReplica) {
+        System.out.println("main sucker");
+      } else {
+        System.out.println("non main sucker");
+      }
       srv.setReuseAddress(true);
       while (true) {
         Socket c = srv.accept();
         new Thread(() -> {
           try {
-            System.out.println("got u sucker");
             handleClient(c, port);
           } catch (Exception ignore) {
           } finally {
