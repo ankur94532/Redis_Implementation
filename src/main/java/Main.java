@@ -87,6 +87,7 @@ public class Main {
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
           System.out.println(k);
           mout.flush();
+          //
         }
       }
     }
