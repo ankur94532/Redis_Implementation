@@ -118,7 +118,6 @@ public class Main {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
           try {
-            System.out.println(masterCommands.size());
             handle(clientSocket, masterCommands);
           } catch (IOException e) {
             e.printStackTrace();
@@ -230,9 +229,10 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client) throws IOException {
-    OutputStream out = System.out;
-    if (client.getLocalPort() != master) {
-      out = client.getOutputStream();
+    OutputStream out = client.getOutputStream();
+    boolean isMaster = false;
+    if (client.getLocalPort() == master) {
+      isMaster = true;
     }
     if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
@@ -276,12 +276,16 @@ public class Main {
         Key key = new Key(commands.get(2), Instant.now().plusMillis(1_000_000_000L));
         entries.put(commands.get(1), key);
       }
-      out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
+      if (!isMaster) {
+        out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
+      }
     } else if (commands.get(0).equalsIgnoreCase("incr")) {
       if (!entries.containsKey(commands.get(1))) {
         Key key = new Key("1", Instant.now().plusMillis(1_000_000_000L));
         entries.put(commands.get(1), key);
-        out.write((":1" + "\r\n").getBytes(StandardCharsets.US_ASCII));
+        if (!isMaster) {
+          out.write((":1" + "\r\n").getBytes(StandardCharsets.US_ASCII));
+        }
         return;
       }
       Key key = entries.get(commands.get(1));
@@ -289,13 +293,17 @@ public class Main {
       try {
         val = Long.parseLong(key.value);
       } catch (NumberFormatException e) {
-        out.write("-ERR value is not an integer or out of range\r\n".getBytes());
+        if (!isMaster) {
+          out.write("-ERR value is not an integer or out of range\r\n".getBytes());
+        }
         return;
       }
       val++;
       key.value = Long.toString(val);
       entries.put(commands.get(1), key);
-      out.write((":" + val + "\r\n").getBytes(StandardCharsets.US_ASCII));
+      if (!isMaster) {
+        out.write((":" + val + "\r\n").getBytes(StandardCharsets.US_ASCII));
+      }
     } else if (commands.get(0).equalsIgnoreCase("get")) {
       if (entries.containsKey(commands.get(1))) {
         Key key = entries.get(commands.get(1));
@@ -326,9 +334,11 @@ public class Main {
 
         int len = entry.size();
         String p = Integer.toString(len);
-        out.write(":".getBytes(StandardCharsets.US_ASCII));
-        out.write(p.getBytes(StandardCharsets.US_ASCII));
-        out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+        if (!isMaster) {
+          out.write(":".getBytes(StandardCharsets.US_ASCII));
+          out.write(p.getBytes(StandardCharsets.US_ASCII));
+          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+        }
       }
 
     } else if (commands.get(0).equalsIgnoreCase("lpush")) {
@@ -345,9 +355,11 @@ public class Main {
 
         int len = entry.size();
         String p = Integer.toString(len);
-        out.write(":".getBytes(StandardCharsets.US_ASCII));
-        out.write(p.getBytes(StandardCharsets.US_ASCII));
-        out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+        if (!isMaster) {
+          out.write(":".getBytes(StandardCharsets.US_ASCII));
+          out.write(p.getBytes(StandardCharsets.US_ASCII));
+          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+        }
       }
 
     } else if (commands.get(0).equalsIgnoreCase("llen")) {
@@ -392,7 +404,9 @@ public class Main {
       String name = commands.get(1);
       List<String> list = lists.get(name);
       if (list == null || list.isEmpty()) {
-        out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
+        if (!isMaster) {
+          out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
+        }
       } else {
         if (commands.size() > 2) {
           int count = Math.min(Integer.parseInt(commands.get(2)), list.size());
@@ -404,9 +418,11 @@ public class Main {
         } else {
           String str = list.remove(0);
           byte[] data = str.getBytes(StandardCharsets.UTF_8);
-          out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
-          out.write(data);
-          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+          if (!isMaster) {
+            out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+            out.write(data);
+            out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+          }
         }
       }
 
@@ -465,11 +481,12 @@ public class Main {
           }
         }
       }
-
-      if (popped != null) {
-        writeRespArray(out, java.util.List.of(key, popped));
-      } else if (timedOut) {
-        out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+      if (!isMaster) {
+        if (popped != null) {
+          writeRespArray(out, java.util.List.of(key, popped));
+        } else if (timedOut) {
+          out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        }
       }
 
     } else if (commands.get(0).equalsIgnoreCase("type")) {
@@ -493,7 +510,9 @@ public class Main {
         commands.set(2, builder.toString());
       }
       if (check_0(commands.get(2))) {
-        out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
+        if (!isMaster) {
+          out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
+        }
         return;
       }
       HashMap<String, HashMap<String, String>> newEntries = new HashMap<>();
@@ -504,9 +523,11 @@ public class Main {
           last = entry.getKey();
         }
         if (check_inc(last, commands.get(2))) {
-          out.write(
-              ("-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n")
-                  .getBytes());
+          if (!isMaster) {
+            out.write(
+                ("-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n")
+                    .getBytes());
+          }
           return;
         }
       }
@@ -518,9 +539,11 @@ public class Main {
       streams.put(commands.get(1), newEntries);
       String p = commands.get(2);
       byte[] b = p.getBytes(StandardCharsets.UTF_8);
-      out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
-      out.write(b);
-      out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+      if (!isMaster) {
+        out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+        out.write(b);
+        out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+      }
       if (locks.containsKey(commands.get(1))) {
         synchronized (locks.get(commands.get(1))) {
           locks.get(commands.get(1)).notifyAll();
@@ -551,8 +574,9 @@ public class Main {
         return;
       }
       int len = (commands.size() - 2) / 2;
-      out.write(("*" + len + "\r\n").getBytes());
-      System.out.println("*" + len + "\r\n");
+      if (!isMaster) {
+        out.write(("*" + len + "\r\n").getBytes());
+      }
       for (int i = 2; i < 2 + len; i++) {
         readRange(commands.get(i), commands.get(i + len), out);
       }
