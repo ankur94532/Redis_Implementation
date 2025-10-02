@@ -65,7 +65,11 @@ public class Main {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
           try {
-            handle(clientSocket);
+            if (args.length > 2) {
+              clientSocket.getOutputStream().write("$11\r\nrole:master\r\n".getBytes());
+            } else {
+              handle(clientSocket);
+            }
           } catch (IOException e) {
             e.printStackTrace();
           }
