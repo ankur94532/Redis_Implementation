@@ -84,6 +84,7 @@ public class Main {
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
+          System.out.println("lund");
           int used = 0;
           buf = new byte[8192];
           InputStream in = masterSock.getInputStream();
@@ -100,6 +101,7 @@ public class Main {
               start = i + 1;
             }
           }
+          System.out.println("lund");
           buf[used] = 10;
           used++;
           byte[] buf1 = new byte[8192];
@@ -111,7 +113,6 @@ public class Main {
           List<String> commands = new ArrayList<>();
           StringBuilder sb = new StringBuilder();
           for (int i = 0; i < used;) {
-            System.out.println("hmmm");
             if (buf[i] == 42 && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               i++;
               while (i < used && buf[i] >= 48 && buf[i] <= 57) {
