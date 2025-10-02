@@ -49,8 +49,8 @@ public class Main {
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
     int port = 6379;
-    for (String str : args) {
-      System.out.print(str + " ");
+    if (args.length > 1) {
+      port = Integer.parseInt(args[args.length - 1]);
     }
     ServerSocket serverSocket;
     if (servers.containsKey(port)) {
