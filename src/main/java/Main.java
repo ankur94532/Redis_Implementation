@@ -31,6 +31,7 @@ public class Main {
   static HashMap<String, HashMap<String, HashMap<String, String>>> streams = new HashMap<>();
   static final Object lock = new Object();
   static HashMap<String, Object> locks = new HashMap<>();
+  Map<Integer, ServerSocket> servers = new HashMap<>();
 
   static final class Waiter {
     final Socket client;
@@ -115,6 +116,9 @@ public class Main {
          * System.out.println(command);
          * }
          */
+        for (String str : commands) {
+          System.out.println(str);
+        }
         if (commands.get(0).equalsIgnoreCase("discard")) {
           if (!multi) {
             out.write("-ERR DISCARD without MULTI\r\n".getBytes());
