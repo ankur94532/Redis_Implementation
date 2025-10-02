@@ -65,7 +65,6 @@ public class Main {
       servers.put(port, serverSocket);
     }
     serverSocket.setReuseAddress(true);
-    List<List<String>> masterCommands = new ArrayList<>();
     if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
         master = Integer.parseInt(args[3].split(" ")[1]);
@@ -128,7 +127,17 @@ public class Main {
               }
               sb.setLength(0);
               if (i + 1 == used || buf[i + 1] == 42) {
-                masterCommands.add(commands);
+                Thread worker = new Thread(() -> {
+                  try {
+                    execute(commands, masterSock);
+                  } catch (IOException e) {
+                  }
+                });
+                worker.start();
+                try {
+                  worker.join();
+                } catch (InterruptedException e) {
+                }
                 commands.clear();
               }
               i++;
@@ -141,7 +150,6 @@ public class Main {
         }
       }
     }
-    System.out.println(masterCommands.size());
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
