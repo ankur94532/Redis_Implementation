@@ -86,6 +86,9 @@ public class Main {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             List<String> commands = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
+            for (int i = used; i < used + k; i++) {
+              System.out.println((char) buf[i]);
+            }
             for (int i = used; i < used + k;) {
               if (buf[i] == 42 && i + 1 < used + k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
                 i++;
