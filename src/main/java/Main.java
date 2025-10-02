@@ -121,6 +121,10 @@ public class Main {
             continue;
           }
           multi = false;
+          if (queueCommands.isEmpty()) {
+            out.write("*0\r\n".getBytes());
+            continue;
+          }
           while (queueCommands.size() > 0) {
             execute(out, queueCommands.peekFirst(), client);
             queueCommands.pollFirst();
