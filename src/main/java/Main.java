@@ -93,7 +93,13 @@ public class Main {
               break;
             }
           }
+          int start = 0;
           for (int i = 0; i < used; i++) {
+            if (buf[i] < 0) {
+              start = i + 1;
+            }
+          }
+          for (int i = start; i < used; i++) {
             System.out.println(buf[i]);
           }
         }
