@@ -88,13 +88,8 @@ public class Main {
           int used = 0;
           buf = new byte[8192];
           InputStream in = masterSock.getInputStream();
-          while (true) {
-            int n = in.read(buf, used, buf.length - used);
-            used += n;
-            if (n == -1) {
-              break;
-            }
-          }
+          int n = in.read(buf, used, buf.length - used);
+          used += n;
           int start = 0;
           for (int i = 0; i < used; i++) {
             if (buf[i] < 0) {
