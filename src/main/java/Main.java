@@ -84,7 +84,6 @@ public class Main {
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
-          System.out.println("lund");
           int used = 0;
           buf = new byte[8192];
           InputStream in = masterSock.getInputStream();
@@ -96,7 +95,6 @@ public class Main {
               start = i + 1;
             }
           }
-          System.out.println("lund");
           buf[used] = 10;
           used++;
           byte[] buf1 = new byte[8192];
@@ -131,6 +129,7 @@ public class Main {
               }
               i++;
             } else {
+              System.out.println(buf[i]);
               sb.append((char) buf[i]);
               i++;
             }
@@ -138,7 +137,6 @@ public class Main {
         }
       }
     }
-    System.out.println("here");
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
