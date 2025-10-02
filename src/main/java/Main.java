@@ -82,13 +82,11 @@ public class Main {
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
+          int last = used;
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             List<String> commands = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
-            for (int i = used; i < used + k; i++) {
-              System.out.println(buf[i]);
-            }
             for (int i = used; i < used + k;) {
               if (buf[i] == 42 && i + 1 < used + k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
                 i++;
@@ -109,11 +107,7 @@ public class Main {
                 sb.setLength(0);
                 if (i + 1 == used + k
                     || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
-                  for (String str : commands) {
-                    System.out.print(str + " ");
-                  }
-                  System.out.println();
-                  execute(commands, masterSock);
+                  execute(commands, masterSock, true, used - last);
                   commands.clear();
                 }
                 i++;
@@ -128,7 +122,6 @@ public class Main {
       }).start();
     }
     try {
-      System.out.println("hi");
       while (true) {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
@@ -152,44 +145,39 @@ public class Main {
       byte[] buf = new byte[8192];
       int used = 0;
       boolean multi = false;
+      List<String> commands = new ArrayList<>();
+      StringBuilder sb = new StringBuilder();
       Deque<List<String>> queueCommands = new ArrayDeque<>();
       while (true) {
-        int n = in.read(buf, used, buf.length - used);
-        if (n == -1) {
-          break;
-        }
-        List<String> commands = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
-        boolean first = false;
-        for (int i = used; i < used + n;) {
-          if (!first && buf[i] == '*') {
+        int k = in.read(buf, used, buf.length - used);
+        for (int i = used; i < used + k;) {
+          if (buf[i] == 42 && i + 1 < used + k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
             i++;
-            while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
+            while (i < used + k && buf[i] >= 48 && buf[i] <= 57) {
               i++;
-            first = true;
-            continue;
-          }
-          if (buf[i] == '$') {
+            }
+          } else if (buf[i] == 36 && i + 1 < used + k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+            i++;
+            while (i < used + k && buf[i] >= 48 && buf[i] <= 57) {
+              i++;
+            }
+          } else if (buf[i] == 13) {
+            i++;
+          } else if (buf[i] == 10) {
             if (sb.length() > 0) {
               commands.add(sb.toString());
-              sb.setLength(0);
+            }
+            sb.setLength(0);
+            if (i + 1 == used + k) {
+              break;
             }
             i++;
-            while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
-              i++;
-            continue;
-          }
-          if ((buf[i] >= 'A' && buf[i] <= 'Z') ||
-              (buf[i] >= 'a' && buf[i] <= 'z') ||
-              (buf[i] >= '0' && buf[i] <= '9') ||
-              buf[i] == '-' || buf[i] == '.' || buf[i] == '_' || buf[i] == '*' || buf[i] == '+') {
+          } else {
             sb.append((char) buf[i]);
+            i++;
           }
-          i++;
+          used += k;
         }
-        if (sb.length() > 0)
-          commands.add(sb.toString());
-        used += n;
         if (commands.get(0).equalsIgnoreCase("discard")) {
           if (!multi) {
             out.write("-ERR DISCARD without MULTI\r\n".getBytes());
@@ -212,7 +200,7 @@ public class Main {
           }
           out.write(("*" + queueCommands.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
           while (queueCommands.size() > 0) {
-            execute(queueCommands.peekFirst(), client);
+            execute(queueCommands.peekFirst(), client, false, used);
             queueCommands.pollFirst();
           }
           continue;
@@ -230,9 +218,11 @@ public class Main {
         for (String str : commands) {
           System.out.println(str);
         }
-        execute(commands, client);
+        execute(commands, client, false, used);
       }
-    } catch (IOException ignored) {
+    } catch (
+
+    IOException ignored) {
     } finally {
       try {
         client.close();
@@ -241,15 +231,8 @@ public class Main {
     }
   }
 
-  static void execute(List<String> commands, Socket client) throws IOException {
-    for (String str : commands) {
-      System.out.println(str);
-    }
+  static void execute(List<String> commands, Socket client, boolean isMaster, int used) throws IOException {
     OutputStream out = client.getOutputStream();
-    boolean isMaster = false;
-    if (client.getLocalPort() == master) {
-      isMaster = true;
-    }
     if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
       byte[] str = HexFormat.of().parseHex(
@@ -262,7 +245,9 @@ public class Main {
     } else if (commands.get(0).equalsIgnoreCase("REPLCONF")) {
       if (commands.size() == 3 && commands.get(1).equals("GETACK") && commands.get(2).equals("*")) {
         System.out.println("hi");
-        out.write("*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n".getBytes());
+        String str = Integer.toString(used);
+        String data = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n" + "$" + str.length() + "\r\n" + str + "\r\n";
+        out.write(data.getBytes());
         return;
       }
       out.write("+OK\r\n".getBytes());
@@ -287,8 +272,9 @@ public class Main {
       out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
 
     } else if (commands.get(0).equalsIgnoreCase("ping")) {
-      out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
-
+      if (!isMaster) {
+        out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
+      }
     } else if (commands.get(0).equalsIgnoreCase("set")) {
       if (commands.size() > 3) {
         Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
