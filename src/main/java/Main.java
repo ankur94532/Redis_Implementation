@@ -192,7 +192,7 @@ public class Main {
 
   static void execute(OutputStream out, List<String> commands, Socket client) throws IOException {
     if (commands.get(0).equalsIgnoreCase("info")) {
-      int port = client.getPort();
+      int port = client.getLocalPort();
       System.out.println(port);
       if (masters.containsKey(port)) {
         out.write("$10\r\nrole:slave\r\n".getBytes());
