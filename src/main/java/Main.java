@@ -108,6 +108,9 @@ public class Main {
           List<String> commands = new ArrayList<>();
           StringBuilder sb = new StringBuilder();
           for (int i = 0; i < used; i++) {
+            System.out.println(buf[i]);
+          }
+          for (int i = 0; i < used; i++) {
             if (buf[i] == '*' && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               i++;
               while (i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
