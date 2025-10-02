@@ -111,7 +111,7 @@ public class Main {
           StringBuilder sb = new StringBuilder();
           System.out.println("hey");
           for (int i = 0; i < used; i++) {
-            System.out.println(buf[i]);
+            System.out.println((char) buf[i]);
           }
           for (int i = 0; i < used;) {
             if (buf[i] == 42 && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
