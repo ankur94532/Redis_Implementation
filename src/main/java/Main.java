@@ -58,8 +58,8 @@ public class Main {
     }
     if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
-        System.out.println("hi");
         int master = Integer.parseInt(args[3].split(" ")[1]);
+        System.out.println(port + " " + master);
         masters.put(port, master);
         Set<Integer> slave = new HashSet<>();
         if (slaves.containsKey(master)) {
