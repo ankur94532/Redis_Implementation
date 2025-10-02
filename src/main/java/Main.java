@@ -84,6 +84,7 @@ public class Main {
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
           int last = used;
           while (true) {
+            System.out.println(used);
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             List<String> commands = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
