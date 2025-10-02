@@ -112,6 +112,7 @@ public class Main {
               }
             } else {
               sb.append((char) buf[i]);
+              i++;
             }
           }
           if (commands.size() > 0) {
