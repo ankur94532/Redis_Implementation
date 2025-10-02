@@ -86,6 +86,9 @@ public class Main {
           while (true) {
             System.out.println(used);
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
+            if (k == -1) {
+              break;
+            }
             List<String> commands = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             for (int i = used; i < used + k;) {
