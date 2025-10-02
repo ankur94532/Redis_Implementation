@@ -89,7 +89,9 @@ public class Main {
           k = masterSock.getInputStream().read(buf, k, buf.length - k);
           List<String> commands = new ArrayList<>();
           StringBuilder sb = new StringBuilder();
+          System.out.println("total length:" + k);
           for (int i = 0; i < k;) {
+            System.out.println(i);
             if (buf[i] == '*' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               if (sb.length() > 0) {
                 commands.add(sb.toString());
