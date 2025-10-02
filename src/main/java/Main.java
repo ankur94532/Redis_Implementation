@@ -130,9 +130,6 @@ public class Main {
               sb.setLength(0);
               if (i + 1 == used || buf[i + 1] == 42) {
                 execute(commands, masterSock);
-                for (String str : commands) {
-                  System.out.println(str);
-                }
                 commands.clear();
               }
               i++;
