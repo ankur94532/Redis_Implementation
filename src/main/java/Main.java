@@ -93,10 +93,6 @@ public class Main {
             }
             used += n;
           }
-          System.out.println(used);
-          int n = in.read(buf, used, buf.length - used);
-          used += n;
-          System.out.println(used);
           int start = 0;
           for (int i = 0; i < used; i++) {
             if (buf[i] < 0) {
@@ -108,7 +104,6 @@ public class Main {
           byte[] buf1 = new byte[8192];
           for (int i = start; i < used; i++) {
             buf1[i - start] = buf[i];
-            System.out.println((char) buf[i]);
           }
           used -= start;
           buf = buf1;
@@ -138,7 +133,6 @@ public class Main {
               }
               i++;
             } else {
-              System.out.println(buf[i]);
               sb.append((char) buf[i]);
               i++;
             }
