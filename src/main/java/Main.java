@@ -102,8 +102,9 @@ public class Main {
                 commands.add(sb.toString());
                 sb.setLength(0);
               }
+            } else {
+              sb.append((char) buf[i]);
             }
-            sb.append((char) buf[i]);
           }
           if (commands.size() > 0) {
             masterCommands.add(commands);
@@ -112,6 +113,7 @@ public class Main {
         }
       }
     }
+    System.out.println(masterCommands.size());
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
