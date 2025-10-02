@@ -128,7 +128,7 @@ public class Main {
               }
               sb.setLength(0);
               if (i + 1 == used || buf[i + 1] == 42) {
-                execute(commands, masterSock);
+                masterCommands.add(commands);
                 commands.clear();
               }
               i++;
@@ -138,26 +138,24 @@ public class Main {
               i++;
             }
           }
-          handle(masterSock);
         }
       }
     }
-    if (!args[2].equals("--replicaof")) {
-      try {
-        while (true) {
-          Socket clientSocket = serverSocket.accept();
-          new Thread(() -> {
-            try {
-              handle(clientSocket);
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-          }).start();
-        }
-      } finally {
+    System.out.println(masterCommands.size());
+    try {
+      while (true) {
+        Socket clientSocket = serverSocket.accept();
+        new Thread(() -> {
+          try {
+            handle(clientSocket);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }).start();
       }
+    } finally {
+      serverSocket.close();
     }
-    serverSocket.close();
   }
 
   static void handle(Socket client) throws IOException {
