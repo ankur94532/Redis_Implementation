@@ -65,9 +65,9 @@ public class Main {
       servers.put(port, serverSocket);
     }
     serverSocket.setReuseAddress(true);
-    if (args.length > 2) {
-      if (args[2].equals("--replicaof")) {
-        master = Integer.parseInt(args[3].split(" ")[1]);
+    if (args.length > 2 && args[2].equals("--replicaof")) {
+      master = Integer.parseInt(args[3].split(" ")[1]);
+      new Thread(() -> {
         try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
           byte[] buf = new byte[8192];
           int used = 0;
@@ -119,8 +119,9 @@ public class Main {
               }
             }
           }
+        } catch (IOException e) {
         }
-      }
+      }).start();
     }
     try {
       System.out.println("hi");
