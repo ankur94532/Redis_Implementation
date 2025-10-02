@@ -80,7 +80,7 @@ public class Main {
           String data = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port" + "\r\n$4\r\n" + Integer.toString(port)
               + "\r\n";
           mout.write(data.getBytes());
-          // mout.write("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n".getBytes());
+          mout.write("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n".getBytes());
         }
       }
     }
