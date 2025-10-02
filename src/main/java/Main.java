@@ -37,6 +37,7 @@ public class Main {
   static HashMap<String, Object> locks = new HashMap<>();
   static Map<Integer, ServerSocket> servers = new HashMap<>();
   static Map<Integer, Set<Socket>> slaves = new HashMap<>();
+  static Deque<List<String>> tasks = new ArrayDeque<>();
   static int port = 6379;
   static int master = -1;
 
@@ -128,19 +129,7 @@ public class Main {
               }
               sb.setLength(0);
               if (i + 1 == used || buf[i + 1] == 42) {
-                c++;
-                Thread worker = new Thread(() -> {
-                  try {
-                    execute(commands, masterSock);
-                  } catch (IOException e) {
-                  }
-                });
-                c--;
-                worker.start();
-                try {
-                  worker.join();
-                } catch (InterruptedException e) {
-                }
+                tasks.add(commands);
                 commands.clear();
               }
               i++;
@@ -153,27 +142,24 @@ public class Main {
         }
       }
     }
-    if (c == 0) {
-      try {
-        while (true) {
-          Socket clientSocket = serverSocket.accept();
-          new Thread(() -> {
-            try {
-              handle(clientSocket);
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-          }).start();
-        }
-      } finally {
-        serverSocket.close();
+    try {
+      while (true) {
+        Socket clientSocket = serverSocket.accept();
+        new Thread(() -> {
+          try {
+            handle(clientSocket);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }).start();
       }
+    } finally {
+      serverSocket.close();
     }
   }
 
   static void handle(Socket client) throws IOException {
     try {
-      System.out.println("hi");
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[8192];
@@ -182,6 +168,10 @@ public class Main {
       Deque<List<String>> queueCommands = new ArrayDeque<>();
       while (true) {
         int n = in.read(buf, used, buf.length - used);
+        while (tasks.size() > 0) {
+          execute(tasks.peekFirst(), client);
+          tasks.pollFirst();
+        }
         if (n == -1) {
           break;
         }
@@ -269,7 +259,7 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client) throws IOException {
-    System.out.println("hlo");
+    System.out.println("hi");
     OutputStream out = client.getOutputStream();
     boolean isMaster = false;
     if (client.getLocalPort() == master) {
