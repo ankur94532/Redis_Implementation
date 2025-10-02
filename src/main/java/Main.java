@@ -39,6 +39,7 @@ public class Main {
   static Map<Integer, Set<Socket>> slaves = new HashMap<>();
   static Map<Integer, Integer> masters = new HashMap<>();
   static int port = 6379;
+  static int master = -1;
 
   static final class Waiter {
     final Socket client;
@@ -67,7 +68,7 @@ public class Main {
     serverSocket.setReuseAddress(true);
     if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
-        int master = Integer.parseInt(args[3].split(" ")[1]);
+        master = Integer.parseInt(args[3].split(" ")[1]);
         try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
           OutputStream mout = masterSock.getOutputStream();
           mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
@@ -214,7 +215,7 @@ public class Main {
       out.write("+OK\r\n".getBytes());
     } else if (commands.get(0).equalsIgnoreCase("info")) {
       int port = client.getLocalPort();
-      if (masters.containsKey(port)) {
+      if (master != -1) {
         out.write("$10\r\nrole:slave\r\n".getBytes());
       } else {
         String body = "role:master\r\n" +
