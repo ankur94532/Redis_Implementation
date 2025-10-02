@@ -37,11 +37,9 @@ public class Main {
     }
 
     if (!isReplica) {
-      System.out.println("hi");
       // If not a replica, signal immediate availability
       initialSyncDone.countDown();
     } else {
-      System.out.println("hlo");
       // ---- Replication thread ----
       Thread repl = new Thread(() -> {
         while (true) {
@@ -84,6 +82,7 @@ public class Main {
         Socket c = srv.accept();
         new Thread(() -> {
           try {
+            System.out.println("got u sucker");
             handleClient(c, port);
           } catch (Exception ignore) {
           } finally {
