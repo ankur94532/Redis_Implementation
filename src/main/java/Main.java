@@ -74,11 +74,17 @@ public class Main {
         }
         slave.add(port);
         slaves.put(master, slave);
-        OutputStream out = new ServerSocket(master).accept().getOutputStream();
+        if (!servers.containsKey(master)) {
+          servers.put(master, new ServerSocket(master));
+        }
+        Socket client = servers.get(master).accept();
+        OutputStream out = client.getOutputStream();
         out.write("*1\\r\\n$4\\r\\nPING\r\n".getBytes());
       }
     }
-    try {
+    try
+
+    {
       while (true) {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
