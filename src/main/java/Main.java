@@ -117,9 +117,9 @@ public class Main {
                   System.out.println();
                   execute(commands, masterSock, true, indices.getLast() - indices.getFirst());
                   commands.clear();
+                  indices.add(i + 1);
                 }
                 i++;
-                indices.add(i);
               } else {
                 sb.append((char) buf[i]);
                 i++;
