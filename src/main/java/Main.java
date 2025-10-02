@@ -110,7 +110,7 @@ public class Main {
           List<String> commands = new ArrayList<>();
           StringBuilder sb = new StringBuilder();
           System.out.println("hey");
-          for (int i = 0; i < used; i++) {
+          for (int i = 0; i < used;) {
             if (buf[i] == 42 && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               i++;
               while (i < used && buf[i] >= 48 && buf[i] <= 57) {
