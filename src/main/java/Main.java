@@ -196,10 +196,15 @@ public class Main {
       if (masters.containsKey(port)) {
         out.write("$10\r\nrole:slave\r\n".getBytes());
       } else {
-        out.write("$85\r\n".getBytes());
-        out.write(("role:master\r\n" + "master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb\r\n"
-            + "master_repl_offset:0\r\n").getBytes());
-        out.write("\r\n".getBytes());
+        String body = "role:master\r\n" +
+            "master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb\r\n" +
+            "master_repl_offset:0\r\n";
+
+        byte[] b = body.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        out.write(("$" + b.length + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        out.write(b);
+        out.write("\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+
       }
     } else if (commands.get(0).equalsIgnoreCase("echo")) {
       String p = commands.get(1);
