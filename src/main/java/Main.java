@@ -82,9 +82,7 @@ public class Main {
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
-          while (true) {
-            handle(masterSock);
-          }
+          System.out.println("hi");
         }
       }
     }
@@ -198,7 +196,6 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client) throws IOException {
-    System.out.println("hi");
     OutputStream out = System.out;
     if (client.getLocalPort() != master) {
       out = client.getOutputStream();
@@ -238,10 +235,6 @@ public class Main {
       out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
 
     } else if (commands.get(0).equalsIgnoreCase("set")) {
-      System.out.println("hlo");
-      for (String cmd : commands) {
-        System.out.println(cmd);
-      }
       if (commands.size() > 3) {
         Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
         entries.put(commands.get(1), key);
