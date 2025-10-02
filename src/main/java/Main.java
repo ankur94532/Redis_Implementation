@@ -91,30 +91,43 @@ public class Main {
           StringBuilder sb = new StringBuilder();
           System.out.println("total length:" + k);
           for (int i = 0; i < k;) {
-            System.out.println(i);
             if (buf[i] == '*' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
-              if (sb.length() > 0) {
-                commands.add(sb.toString());
-                sb.setLength(0);
-              }
               i++;
               while (i < k && buf[i] >= 48 && buf[i] <= 57) {
                 i++;
               }
-              if (commands.size() > 0) {
-                masterCommands.add(commands);
-              }
-              commands.clear();
             } else if (buf[i] == '$' && i + 1 < k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
-              if (sb.length() > 0) {
-                commands.add(sb.toString());
-                sb.setLength(0);
-              }
               i++;
               while (i < k && buf[i] >= 48 && buf[i] <= 57) {
                 i++;
               }
-            } else if (buf[i] == '\r' || buf[i] == '\n') {
+            } else if (buf[i] == '\r') {
+              i++;
+            } else if (buf[i] == '\n') {
+              if (i + 1 == k) {
+                if (sb.length() > 0) {
+                  commands.add(sb.toString());
+                }
+                if (commands.size() > 0) {
+                  masterCommands.add(commands);
+                }
+                break;
+              }
+              if (buf[i + 1] == '*') {
+                if (sb.length() > 0) {
+                  commands.add(sb.toString());
+                }
+                if (commands.size() > 0) {
+                  masterCommands.add(commands);
+                }
+                sb.setLength(0);
+                masterCommands.clear();
+              } else if (buf[i + 1] == '$') {
+                if (sb.length() > 0) {
+                  commands.add(sb.toString());
+                }
+                sb.setLength(0);
+              }
               i++;
             } else {
               sb.append((char) buf[i]);
@@ -124,13 +137,6 @@ public class Main {
               System.out.print(str + " ");
             }
             System.out.println();
-          }
-          if (sb.length() > 0) {
-            commands.add(sb.toString());
-            sb.setLength(0);
-          }
-          if (commands.size() > 0) {
-            masterCommands.add(commands);
           }
           System.out.println("present length:" + masterCommands.size());
           mout.flush();
