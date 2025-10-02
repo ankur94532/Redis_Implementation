@@ -99,8 +99,41 @@ public class Main {
               start = i + 1;
             }
           }
+          byte[] buf1 = new byte[8192];
           for (int i = start; i < used; i++) {
-            System.out.println((char) buf[i]);
+            buf1[i - start] = buf[i];
+          }
+          used -= start;
+          buf = buf1;
+          List<String> commands = new ArrayList<>();
+          StringBuilder sb = new StringBuilder();
+          for (int i = 0; i < used; i++) {
+            if (buf[i] == '*' && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+              i++;
+              while (i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+                i++;
+              }
+            } else if (buf[i] == '$' && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+              i++;
+              while (i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+                i++;
+              }
+            } else if (buf[i] == '\r') {
+              i++;
+            } else if (buf[i] == '\n') {
+              if (sb.length() > 0) {
+                commands.add(sb.toString());
+              }
+              sb.setLength(0);
+              if (i + 1 == used || buf[i + 1] == '*') {
+                execute(commands, masterSock);
+                commands.clear();
+              }
+              i++;
+            } else {
+              sb.append(buf[i]);
+              i++;
+            }
           }
         }
       }
