@@ -83,7 +83,6 @@ public class Main {
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
-          k += masterSock.getInputStream().read(buf, k, buf.length - k);
           k = 0;
           buf = new byte[8192];
           k = masterSock.getInputStream().read(buf, k, buf.length - k);
