@@ -115,6 +115,10 @@ public class Main {
               i++;
             }
           }
+          if (sb.length() > 0) {
+            commands.add(sb.toString());
+            sb.setLength(0);
+          }
           if (commands.size() > 0) {
             masterCommands.add(commands);
           }
@@ -142,9 +146,8 @@ public class Main {
     try {
       for (int i = 0; i < masterCommands.size(); i++) {
         for (int j = 0; j < masterCommands.get(i).size(); j++) {
-          System.out.print(masterCommands.get(i).get(j) + " ");
+          System.out.println(masterCommands.get(i).get(j) + " ");
         }
-        System.out.println();
         execute(masterCommands.get(i), client);
       }
       InputStream in = client.getInputStream();
