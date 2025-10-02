@@ -113,12 +113,12 @@ public class Main {
           for (int i = 0; i < used; i++) {
             if (buf[i] == 42 && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               i++;
-              while (i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+              while (i < used && buf[i] >= 48 && buf[i] <= 57) {
                 i++;
               }
             } else if (buf[i] == 36 && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               i++;
-              while (i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+              while (i < used && buf[i] >= 48 && buf[i] <= 57) {
                 i++;
               }
             } else if (buf[i] == 13) {
