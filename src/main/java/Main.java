@@ -109,10 +109,6 @@ public class Main {
           buf = buf1;
           List<String> commands = new ArrayList<>();
           StringBuilder sb = new StringBuilder();
-          System.out.println("hey");
-          for (int i = 0; i < used; i++) {
-            System.out.println((char) buf[i]);
-          }
           for (int i = 0; i < used;) {
             if (buf[i] == 42 && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               i++;
@@ -142,23 +138,26 @@ public class Main {
               i++;
             }
           }
+          handle(masterSock);
         }
       }
     }
-    try {
-      while (true) {
-        Socket clientSocket = serverSocket.accept();
-        new Thread(() -> {
-          try {
-            handle(clientSocket);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }).start();
+    if (!args[2].equals("--replicaof")) {
+      try {
+        while (true) {
+          Socket clientSocket = serverSocket.accept();
+          new Thread(() -> {
+            try {
+              handle(clientSocket);
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }).start();
+        }
+      } finally {
       }
-    } finally {
-      serverSocket.close();
     }
+    serverSocket.close();
   }
 
   static void handle(Socket client) throws IOException {
