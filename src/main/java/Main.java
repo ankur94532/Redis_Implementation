@@ -86,6 +86,7 @@ public class Main {
         }
       }
     }
+    System.out.println("hlo");
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
@@ -104,6 +105,7 @@ public class Main {
 
   static void handle(Socket client) throws IOException {
     try {
+      System.out.println("hey");
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[8192];
