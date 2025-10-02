@@ -83,12 +83,16 @@ public class Main {
           mout.write("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$3\r\neof\r\n".getBytes());
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
-          k += masterSock.getInputStream().read(buf, k, buf.length - k);
           int used = 0;
           buf = new byte[8192];
           InputStream in = masterSock.getInputStream();
-          int n = in.read(buf, used, buf.length - used);
-          used += n;
+          while (true) {
+            int n = in.read(buf, used, buf.length - used);
+            if (n == -1) {
+              break;
+            }
+            used += n;
+          }
           int start = 0;
           for (int i = 0; i < used; i++) {
             if (buf[i] < 0) {
@@ -100,6 +104,7 @@ public class Main {
           byte[] buf1 = new byte[8192];
           for (int i = start; i < used; i++) {
             buf1[i - start] = buf[i];
+            System.out.println((char) buf[i]);
           }
           used -= start;
           buf = buf1;
