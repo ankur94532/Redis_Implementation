@@ -74,7 +74,7 @@ public class Main {
         }
         slave.add(port);
         slaves.put(master, slave);
-        try (Socket masterSock = new Socket(args[3], master)) {
+        try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
           OutputStream mout = masterSock.getOutputStream();
           mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
           mout.flush();
