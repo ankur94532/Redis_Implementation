@@ -132,6 +132,10 @@ public class Main {
   static void handle(Socket client, List<List<String>> masterCommands) throws IOException {
     try {
       for (int i = 0; i < masterCommands.size(); i++) {
+        for (int j = 0; j < masterCommands.get(i).size(); j++) {
+          System.out.print(masterCommands.get(i).get(j) + " ");
+        }
+        System.out.println();
         execute(masterCommands.get(i), client);
       }
       InputStream in = client.getInputStream();
