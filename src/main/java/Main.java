@@ -86,6 +86,7 @@ public class Main {
           indices.add(used);
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
+            System.out.println(k);
             if (k == -1) {
               break;
             }
