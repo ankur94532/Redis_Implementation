@@ -84,6 +84,7 @@ public class Main {
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
           List<Integer> indices = new ArrayList<>();
           indices.add(used);
+          System.out.println(used);
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             System.out.println(k);
