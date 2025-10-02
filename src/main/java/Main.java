@@ -37,7 +37,6 @@ public class Main {
   static HashMap<String, Object> locks = new HashMap<>();
   static Map<Integer, ServerSocket> servers = new HashMap<>();
   static Map<Integer, Set<Socket>> slaves = new HashMap<>();
-  static Map<Integer, Integer> masters = new HashMap<>();
   static int port = 6379;
   static int master = -1;
 
@@ -202,6 +201,9 @@ public class Main {
   }
 
   static void execute(OutputStream out, List<String> commands, Socket client) throws IOException {
+    if (client.getLocalPort() == master) {
+      out = System.out;
+    }
     if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
       byte[] str = HexFormat.of().parseHex(
@@ -214,7 +216,6 @@ public class Main {
     } else if (commands.get(0).equalsIgnoreCase("REPLCONF")) {
       out.write("+OK\r\n".getBytes());
     } else if (commands.get(0).equalsIgnoreCase("info")) {
-      int port = client.getLocalPort();
       if (master != -1) {
         out.write("$10\r\nrole:slave\r\n".getBytes());
       } else {
