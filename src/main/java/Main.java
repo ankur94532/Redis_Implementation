@@ -111,6 +111,10 @@ public class Main {
                 sb.setLength(0);
                 if (i + 1 == used + k
                     || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
+                  for (int ind : indices) {
+                    System.out.print(ind + " ");
+                  }
+                  System.out.println();
                   execute(commands, masterSock, true, indices.getLast() - indices.getFirst());
                   commands.clear();
                 }
