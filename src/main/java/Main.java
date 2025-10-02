@@ -48,9 +48,6 @@ public class Main {
 
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
-    for (String str : args) {
-      System.out.println(str);
-    }
     int port = 6379;
     if (args.length > 1) {
       port = Integer.parseInt(args[args.length - 1]);
@@ -68,11 +65,7 @@ public class Main {
         Socket clientSocket = serverSocket.accept();
         new Thread(() -> {
           try {
-            if (args.length > 2) {
-              clientSocket.getOutputStream().write("$11\r\nrole:master\r\n".getBytes());
-            } else {
-              handle(clientSocket);
-            }
+            handle(clientSocket);
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -182,7 +175,9 @@ public class Main {
   }
 
   static void execute(OutputStream out, List<String> commands, Socket client) throws IOException {
-    if (commands.get(0).equalsIgnoreCase("echo")) {
+    if (commands.get(0).equalsIgnoreCase("info")) {
+      out.write("$11\r\nrole:master\r\n".getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("echo")) {
       String p = commands.get(1);
       out.write(("$" + p.getBytes(StandardCharsets.UTF_8).length + "\r\n").getBytes(StandardCharsets.US_ASCII));
       out.write(p.getBytes(StandardCharsets.UTF_8));
