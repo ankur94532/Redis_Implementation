@@ -8,9 +8,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +35,8 @@ public class Main {
   static final Object lock = new Object();
   static HashMap<String, Object> locks = new HashMap<>();
   static Map<Integer, ServerSocket> servers = new HashMap<>();
+  static Map<Integer, Set<Integer>> slaves = new HashMap<>();
+  static Map<Integer, Integer> masters = new HashMap<>();
 
   static final class Waiter {
     final Socket client;
@@ -49,8 +53,20 @@ public class Main {
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
     int port = 6379;
-    if (args.length > 1) {
-      port = Integer.parseInt(args[args.length - 1]);
+    if (args.length > 0) {
+      port = Integer.parseInt(args[1]);
+    }
+    if (args.length > 2) {
+      if (args[2].equals("--replicaof")) {
+        int master = Integer.parseInt(args[3].split(" ")[1]);
+        masters.put(port, master);
+        Set<Integer> slave = new HashSet<>();
+        if (slaves.containsKey(master)) {
+          slave = slaves.get(master);
+        }
+        slave.add(port);
+        slaves.put(master, slave);
+      }
     }
     ServerSocket serverSocket;
     if (servers.containsKey(port)) {
@@ -176,7 +192,12 @@ public class Main {
 
   static void execute(OutputStream out, List<String> commands, Socket client) throws IOException {
     if (commands.get(0).equalsIgnoreCase("info")) {
-      out.write("$11\r\nrole:master\r\n".getBytes());
+      int port = client.getPort();
+      if (masters.containsKey(port)) {
+        out.write("$10\r\nrole:slave\r\n".getBytes());
+      } else {
+        out.write("$11\r\nrole:master\r\n".getBytes());
+      }
     } else if (commands.get(0).equalsIgnoreCase("echo")) {
       String p = commands.get(1);
       out.write(("$" + p.getBytes(StandardCharsets.UTF_8).length + "\r\n").getBytes(StandardCharsets.US_ASCII));
