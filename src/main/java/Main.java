@@ -70,11 +70,11 @@ public class Main {
       if (args[2].equals("--replicaof")) {
         master = Integer.parseInt(args[3].split(" ")[1]);
         try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
-          OutputStream mout = masterSock.getOutputStream();
-          mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
           byte[] buf = new byte[8192];
           int k = 0;
-          k += masterSock.getInputStream().read(buf, k, buf.length - k);
+          OutputStream mout = masterSock.getOutputStream();
+          mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+          masterSock.getInputStream().read(buf, k, buf.length - k);
           String data = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port" + "\r\n$4\r\n" + Integer.toString(port)
               + "\r\n";
           mout.write(data.getBytes());
@@ -83,51 +83,19 @@ public class Main {
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           k += masterSock.getInputStream().read(buf, k, buf.length - k);
-          k += masterSock.getInputStream().read(buf, k, buf.length - k);
           int used = 0;
-          buf = new byte[8125];
+          buf = new byte[8192];
           InputStream in = masterSock.getInputStream();
           while (true) {
             int n = in.read(buf, used, buf.length - used);
+            used += n;
             if (n == -1) {
               break;
             }
-            List<String> commands = new ArrayList<>();
-            StringBuilder sb = new StringBuilder();
-            boolean first = false;
-            for (int i = used; i < used + n;) {
-              if (!first && buf[i] == '*') {
-                i++;
-                while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
-                  i++;
-                first = true;
-                continue;
-              }
-              if (buf[i] == '$') {
-                if (sb.length() > 0) {
-                  commands.add(sb.toString());
-                  sb.setLength(0);
-                }
-                i++;
-                while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
-                  i++;
-                continue;
-              }
-              if ((buf[i] >= 'A' && buf[i] <= 'Z') ||
-                  (buf[i] >= 'a' && buf[i] <= 'z') ||
-                  (buf[i] >= '0' && buf[i] <= '9') ||
-                  buf[i] == '-' || buf[i] == '.' || buf[i] == '_' || buf[i] == '*' || buf[i] == '+') {
-                sb.append((char) buf[i]);
-              }
-              i++;
-            }
-            used += n;
-            for (String str : commands) {
-              System.out.println(str);
-            }
-            execute(commands, masterSock);
           }
-          mout.flush();
+          for (int i = 0; i < used; i++) {
+            System.out.println(buf[i]);
+          }
         }
       }
     }
