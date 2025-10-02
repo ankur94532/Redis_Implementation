@@ -134,7 +134,6 @@ public class Main {
               }
               i++;
             } else {
-              System.out.println((char) buf[i]);
               sb.append((char) buf[i]);
               i++;
             }
@@ -142,6 +141,7 @@ public class Main {
         }
       }
     }
+    System.out.println("here");
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
