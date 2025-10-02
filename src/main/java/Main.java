@@ -120,6 +120,10 @@ public class Main {
               sb.append((char) buf[i]);
               i++;
             }
+            for (String str : commands) {
+              System.out.print(str + " ");
+            }
+            System.out.println();
           }
           if (sb.length() > 0) {
             commands.add(sb.toString());
