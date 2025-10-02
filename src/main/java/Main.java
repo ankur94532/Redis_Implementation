@@ -137,6 +137,7 @@ public class Main {
           out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
           continue;
         }
+        execute(out, commands, client);
       }
     } catch (IOException ignored) {
     } finally {
