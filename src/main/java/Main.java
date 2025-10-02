@@ -145,7 +145,13 @@ public class Main {
             continue;
           }
           Key key = entries.get(commands.get(1));
-          Long val = Long.parseLong(key.value);
+          Long val = -1L;
+          try {
+            val = Long.parseLong(key.value);
+          } catch (NumberFormatException e) {
+            out.write("-ERR value is not an integer or out of range\r\n".getBytes());
+            continue;
+          }
           val++;
           key.value = Long.toString(val);
           entries.put(commands.get(1), key);
