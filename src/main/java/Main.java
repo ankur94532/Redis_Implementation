@@ -82,9 +82,9 @@ public class Main {
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
-          int last = used;
+          List<Integer> indices = new ArrayList<>();
+          indices.add(used);
           while (true) {
-            System.out.println(used);
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             if (k == -1) {
               break;
@@ -111,10 +111,11 @@ public class Main {
                 sb.setLength(0);
                 if (i + 1 == used + k
                     || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
-                  execute(commands, masterSock, true, used - last);
+                  execute(commands, masterSock, true, indices.getLast() - indices.getFirst());
                   commands.clear();
                 }
                 i++;
+                indices.add(i);
               } else {
                 sb.append((char) buf[i]);
                 i++;
@@ -249,7 +250,6 @@ public class Main {
       slaves.put(port, slave);
     } else if (commands.get(0).equalsIgnoreCase("REPLCONF")) {
       if (commands.size() == 3 && commands.get(1).equals("GETACK") && commands.get(2).equals("*")) {
-        System.out.println("hi");
         String str = Integer.toString(used);
         String data = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n" + "$" + str.length() + "\r\n" + str + "\r\n";
         out.write(data.getBytes());
