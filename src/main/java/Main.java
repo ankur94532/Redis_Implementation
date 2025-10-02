@@ -174,7 +174,7 @@ public class Main {
           }
           out.write(("*" + queueCommands.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
           while (queueCommands.size() > 0) {
-            execute(out, queueCommands.peekFirst(), client);
+            execute(queueCommands.peekFirst(), client);
             queueCommands.pollFirst();
           }
           continue;
@@ -189,7 +189,7 @@ public class Main {
           out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
           continue;
         }
-        execute(out, commands, client);
+        execute(commands, client);
       }
     } catch (IOException ignored) {
     } finally {
@@ -200,9 +200,10 @@ public class Main {
     }
   }
 
-  static void execute(OutputStream out, List<String> commands, Socket client) throws IOException {
-    if (client.getLocalPort() == master) {
-      out = System.out;
+  static void execute(List<String> commands, Socket client) throws IOException {
+    OutputStream out = System.out;
+    if (client.getLocalPort() != master) {
+      out = client.getOutputStream();
     }
     if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
