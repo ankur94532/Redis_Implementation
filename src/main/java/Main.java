@@ -128,6 +128,7 @@ public class Main {
           if (commands.size() > 0) {
             masterCommands.add(commands);
           }
+          System.out.println("present length:" + masterCommands.size());
           mout.flush();
         }
       }
