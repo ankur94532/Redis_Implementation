@@ -197,6 +197,7 @@ public class Main {
         out.write("$10\r\nrole:slave\r\n".getBytes());
       } else {
         System.out.println("hi");
+        out.write("*3\r\n".getBytes());
         out.write("$11\r\nrole:master\r\n".getBytes());
         out.write("$54\r\nmaster_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb\r\n".getBytes());
         out.write("$20\r\nmaster_repl_offset:0\r\n".getBytes());
