@@ -19,7 +19,6 @@ public class Main {
   static int port = 6379;
 
   public static void main(String[] args) throws Exception {
-
     // Basic CLI parsing: --port <n> [--replicaof "<host> <port>"]
     for (int i = 0; i < args.length; i++) {
       if ("--port".equals(args[i]) && i + 1 < args.length) {
@@ -36,7 +35,7 @@ public class Main {
     }
 
     if (!isReplica) {
-      // If not a replica, signal immediate availability
+      // Master: clients can proceed immediately
       initialSyncDone.countDown();
     } else {
       // ---- Replication thread ----
@@ -45,23 +44,22 @@ public class Main {
           try (Socket s = new Socket(masterHost, masterPort)) {
             s.setTcpNoDelay(true);
             doHandshake(s, port); // PING / REPLCONF / PSYNC
-            skipInitialRdb(s); // consume $len ... \r\n
-            initialSyncDone.countDown();
+            skipInitialRdb(s); // consume the initial RDB
+            initialSyncDone.countDown(); // Replica ready for client reads
 
             InputStream in = s.getInputStream();
             for (;;) {
-              List<String> cmd = readRespArray(in); // e.g., ["SET","foo","123"]
+              List<String> cmd = readRespArray(in); // ["SET","foo","123"], etc.
               if (cmd == null)
                 break;
               RW.writeLock().lock();
               try {
-                applyFromMaster(cmd); // mutate kv ONLY, no replies here
+                applyFromMaster(cmd); // mutate kv only; no replies
               } finally {
                 RW.writeLock().unlock();
               }
             }
           } catch (Exception e) {
-            // simple retry loop
             try {
               Thread.sleep(200);
             } catch (InterruptedException ie) {
@@ -81,7 +79,6 @@ public class Main {
         Socket c = srv.accept();
         new Thread(() -> {
           try {
-            System.out.println(args.length);
             handleClient(c, port);
           } catch (Exception ignore) {
           } finally {
@@ -97,11 +94,9 @@ public class Main {
 
   // ---- Client handler ----
   static void handleClient(Socket c, int myPort) throws Exception {
-    System.out.println("hi");
-    initialSyncDone.await();
-    System.out.println("hi");
+    if (isReplica)
+      initialSyncDone.await(); // block until initial RDB is consumed
     c.setTcpNoDelay(true);
-    System.out.println("hi");
     InputStream in = c.getInputStream();
     OutputStream out = c.getOutputStream();
 
@@ -150,8 +145,7 @@ public class Main {
             writeError(out, "ERR wrong number of arguments for 'set'");
             break;
           }
-          String key = cmd.get(1);
-          String val = cmd.get(2);
+          String key = cmd.get(1), val = cmd.get(2);
           RW.writeLock().lock();
           try {
             kv.put(key, val);
@@ -162,10 +156,10 @@ public class Main {
           break;
         }
         default: {
-          // minimal other commands support
           writeError(out, "ERR unknown command '" + cmd.get(0) + "'");
         }
       }
+      out.flush();
     }
   }
 
@@ -179,8 +173,7 @@ public class Main {
     } else if ("DEL".equals(op) && cmd.size() >= 2) {
       kv.remove(cmd.get(1));
     }
-    // Extend here for RPUSH/LPUSH/etc., always under write lock (already held by
-    // caller)
+    // Extend for RPUSH/LPUSH/etc. as needed (always under write lock in caller)
   }
 
   // ---- Handshake with master ----
@@ -191,8 +184,7 @@ public class Main {
     // *1\r\n$4\r\nPING\r\n
     writeArrayHeader(out, 1);
     writeBulk(out, "PING");
-
-    // expect +PONG
+    out.flush();
     readSimpleStringLine(in); // "+PONG"
 
     // REPLCONF listening-port <port>
@@ -200,6 +192,7 @@ public class Main {
     writeBulk(out, "REPLCONF");
     writeBulk(out, "listening-port");
     writeBulk(out, Integer.toString(myPort));
+    out.flush();
     readSimpleStringLine(in); // "+OK"
 
     // REPLCONF capa eof
@@ -207,6 +200,7 @@ public class Main {
     writeBulk(out, "REPLCONF");
     writeBulk(out, "capa");
     writeBulk(out, "eof");
+    out.flush();
     readSimpleStringLine(in); // "+OK"
 
     // PSYNC ? -1
@@ -214,9 +208,10 @@ public class Main {
     writeBulk(out, "PSYNC");
     writeBulk(out, "?");
     writeBulk(out, "-1");
+    out.flush();
 
     // Expect: +FULLRESYNC <replid> <offset>\r\n
-    readSimpleStringLine(in); // "+FULLRESYNC ..."
+    readSimpleStringLine(in);
   }
 
   // ---- Consume initial RDB bulk string ----
@@ -227,27 +222,23 @@ public class Main {
     if (sig != '$')
       throw new IOException("Expected bulk head");
 
-    String head = readLine(in); // may be "EOF:...." or "<len>"
+    String head = readLine(in); // "EOF:<sig>" or "<len>"
     if (head.startsWith("EOF:")) {
-      // For this stage, Codecrafters generally uses fixed-length bulk.
-      // If EOF is used, a simple strategy is to read until stream boundary,
-      // but to keep things deterministic we can just drain a chunk and return.
-      // However, tests for this stage send $<len>, so we'll no-op here.
+      // For later stages you’d need to read until EOF marker; current stage uses
+      // $<len>.
       return;
     }
 
-    long len = Long.parseLong(head);
-    readFully(in, len); // read <len> bytes
-    // trailing CRLF of bulk
-    if (in.read() != '\r')
-      throw new IOException("Expected CR after RDB");
-    if (in.read() != '\n')
-      throw new IOException("Expected LF after RDB");
+    long len = Long.parseLong(head); // read payload
+    readFully(in, len);
+    // trailing CRLF
+    if (in.read() != '\r' || in.read() != '\n')
+      throw new IOException("Expected CRLF after RDB");
   }
 
   // ---- RESP helpers ----
   static void writeArrayHeader(OutputStream out, int n) throws IOException {
-    out.write(('*'));
+    out.write('*');
     out.write(Integer.toString(n).getBytes(StandardCharsets.US_ASCII));
     out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
   }
@@ -258,7 +249,7 @@ public class Main {
       return;
     }
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
-    out.write(('$'));
+    out.write('$');
     out.write(Integer.toString(data.length).getBytes(StandardCharsets.US_ASCII));
     out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
     out.write(data);
@@ -300,9 +291,9 @@ public class Main {
         expectCrlf(in);
         out.add(new String(data, StandardCharsets.UTF_8));
       } else if (tt == '+') {
-        out.add(readLine(in)); // simple string
+        out.add(readLine(in));
       } else if (tt == ':') {
-        out.add(readLine(in)); // integer as string
+        out.add(readLine(in));
       } else {
         throw new IOException("Unsupported RESP type: " + (char) tt);
       }
@@ -365,8 +356,7 @@ public class Main {
   }
 
   static void expectCrlf(InputStream in) throws IOException {
-    int cr = in.read();
-    int lf = in.read();
+    int cr = in.read(), lf = in.read();
     if (cr != '\r' || lf != '\n')
       throw new IOException("Expected CRLF");
   }
