@@ -107,7 +107,8 @@ public class Main {
                   commands.add(sb.toString());
                 }
                 sb.setLength(0);
-                if (i + 1 == used + k || buf[i + 1] == 42) {
+                if (i + 1 == used + k
+                    || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
                   for (String str : commands) {
                     System.out.print(str + " ");
                   }
