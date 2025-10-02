@@ -56,6 +56,14 @@ public class Main {
     if (args.length > 0) {
       port = Integer.parseInt(args[1]);
     }
+    ServerSocket serverSocket;
+    if (servers.containsKey(port)) {
+      serverSocket = servers.get(port);
+    } else {
+      serverSocket = new ServerSocket(port);
+      servers.put(port, serverSocket);
+    }
+    serverSocket.setReuseAddress(true);
     if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
         int master = Integer.parseInt(args[3].split(" ")[1]);
@@ -66,16 +74,10 @@ public class Main {
         }
         slave.add(port);
         slaves.put(master, slave);
+        OutputStream out = new ServerSocket(master).accept().getOutputStream();
+        out.write("*1\\r\\n$4\\r\\nPING\r\n".getBytes());
       }
     }
-    ServerSocket serverSocket;
-    if (servers.containsKey(port)) {
-      serverSocket = servers.get(port);
-    } else {
-      serverSocket = new ServerSocket(port);
-      servers.put(port, serverSocket);
-    }
-    serverSocket.setReuseAddress(true);
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
