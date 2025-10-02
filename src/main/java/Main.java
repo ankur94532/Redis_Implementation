@@ -134,7 +134,7 @@ public class Main {
               }
               i++;
             } else {
-              sb.append(buf[i]);
+              sb.append((char) buf[i]);
               i++;
             }
           }
