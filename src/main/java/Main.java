@@ -238,6 +238,9 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client) throws IOException {
+    for (String str : commands) {
+      System.out.println(str);
+    }
     OutputStream out = client.getOutputStream();
     boolean isMaster = false;
     if (client.getLocalPort() == master) {
