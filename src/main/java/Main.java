@@ -188,6 +188,9 @@ public class Main {
           out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
           continue;
         }
+        for (String str : commands) {
+          System.out.println(str);
+        }
         execute(commands, client);
       }
     } catch (IOException ignored) {
