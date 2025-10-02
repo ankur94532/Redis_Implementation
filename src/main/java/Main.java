@@ -137,6 +137,7 @@ public class Main {
         }
       }
     }
+    System.out.println(tasks.size());
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
