@@ -128,12 +128,12 @@ public class Main {
         }
         if (multi) {
           queueCommands.offerLast(commands);
-          out.write("QUEUED\r\n".getBytes(StandardCharsets.US_ASCII));
+          out.write("+QUEUED\r\n".getBytes(StandardCharsets.US_ASCII));
           continue;
         }
         if (commands.get(0).equalsIgnoreCase("multi")) {
           multi = true;
-          out.write("OK\r\n".getBytes(StandardCharsets.US_ASCII));
+          out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
           continue;
         }
       }
