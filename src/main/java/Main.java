@@ -71,6 +71,8 @@ public class Main {
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[8192];
       int used = 0;
+      boolean multi = false;
+      Deque<List<String>> queueCommands = new ArrayDeque<>();
       while (true) {
         int n = in.read(buf, used, buf.length - used);
         if (n == -1) {
@@ -79,7 +81,6 @@ public class Main {
         List<String> commands = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         boolean first = false;
-        boolean second = false;
         for (int i = used; i < used + n;) {
           if (!first && buf[i] == '*') {
             i++;
@@ -96,13 +97,12 @@ public class Main {
             i++;
             while (i < used + n && buf[i] >= '0' && buf[i] <= '9')
               i++;
-            second = true;
             continue;
           }
           if ((buf[i] >= 'A' && buf[i] <= 'Z') ||
               (buf[i] >= 'a' && buf[i] <= 'z') ||
               (buf[i] >= '0' && buf[i] <= '9') ||
-              buf[i] == '-' || buf[i] == '.' || buf[i] == '_' || buf[i] == '*' || buf[i] == '+' || buf[i] == '$') {
+              buf[i] == '-' || buf[i] == '.' || buf[i] == '_' || buf[i] == '*' || buf[i] == '+') {
             sb.append((char) buf[i]);
           }
           i++;
@@ -115,309 +115,26 @@ public class Main {
          * System.out.println(command);
          * }
          */
-        if (commands.isEmpty())
+        if (commands.get(0).equalsIgnoreCase("queued")) {
+          if (!multi) {
+            out.write("-ERR EXEC without MULTI\r\n".getBytes());
+            continue;
+          }
+          multi = false;
+          for (List<String> it : queueCommands) {
+            execute(out, it, client);
+          }
           continue;
-
-        if (commands.get(0).equalsIgnoreCase("echo")) {
-          String p = commands.get(1);
-          out.write(("$" + p.getBytes(StandardCharsets.UTF_8).length + "\r\n").getBytes(StandardCharsets.US_ASCII));
-          out.write(p.getBytes(StandardCharsets.UTF_8));
-          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
-
-        } else if (commands.get(0).equalsIgnoreCase("ping")) {
-          out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
-
-        } else if (commands.get(0).equalsIgnoreCase("set")) {
-          if (commands.size() > 3) {
-            Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
-            entries.put(commands.get(1), key);
-          } else {
-            Key key = new Key(commands.get(2), Instant.now().plusMillis(1_000_000_000L));
-            entries.put(commands.get(1), key);
-          }
-          out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
-
-        } else if (commands.get(0).equalsIgnoreCase("multi")) {
-          out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
-        } else if (commands.get(0).equalsIgnoreCase("incr")) {
-          if (!entries.containsKey(commands.get(1))) {
-            Key key = new Key("1", Instant.now().plusMillis(1_000_000_000L));
-            entries.put(commands.get(1), key);
-            out.write((":1" + "\r\n").getBytes(StandardCharsets.US_ASCII));
-            continue;
-          }
-          Key key = entries.get(commands.get(1));
-          Long val = -1L;
-          try {
-            val = Long.parseLong(key.value);
-          } catch (NumberFormatException e) {
-            out.write("-ERR value is not an integer or out of range\r\n".getBytes());
-            continue;
-          }
-          val++;
-          key.value = Long.toString(val);
-          entries.put(commands.get(1), key);
-          out.write((":" + val + "\r\n").getBytes(StandardCharsets.US_ASCII));
-        } else if (commands.get(0).equalsIgnoreCase("get")) {
-          if (entries.containsKey(commands.get(1))) {
-            Key key = entries.get(commands.get(1));
-            if (Instant.now().isAfter(key.time)) {
-              entries.remove(commands.get(1));
-              out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
-            } else {
-              String p = key.value;
-              byte[] b = p.getBytes(StandardCharsets.UTF_8);
-              out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
-              out.write(b);
-              out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
-            }
-          } else {
-            out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
-          }
-
-        } else if (commands.get(0).equalsIgnoreCase("rpush")) {
-          String name = commands.get(1);
-          synchronized (lock) {
-            List<String> entry = lists.get(name);
-            if (entry == null)
-              entry = new ArrayList<>();
-            for (int i = 2; i < commands.size(); i++)
-              entry.add(commands.get(i));
-            lists.put(name, entry);
-            lock.notifyAll();
-
-            int len = entry.size();
-            String p = Integer.toString(len);
-            out.write(":".getBytes(StandardCharsets.US_ASCII));
-            out.write(p.getBytes(StandardCharsets.US_ASCII));
-            out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
-          }
-
-        } else if (commands.get(0).equalsIgnoreCase("lpush")) {
-          String name = commands.get(1);
-          synchronized (lock) {
-            List<String> entry = lists.get(name);
-            if (entry == null)
-              entry = new ArrayList<>();
-            for (int i = 2; i < commands.size(); i++)
-              entry.add(0, commands.get(i));
-            lists.put(name, entry);
-
-            lock.notifyAll();
-
-            int len = entry.size();
-            String p = Integer.toString(len);
-            out.write(":".getBytes(StandardCharsets.US_ASCII));
-            out.write(p.getBytes(StandardCharsets.US_ASCII));
-            out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
-          }
-
-        } else if (commands.get(0).equalsIgnoreCase("llen")) {
-          List<String> entry = lists.get(commands.get(1));
-          int len = (entry == null) ? 0 : entry.size();
-          String p = Integer.toString(len);
-          out.write(":".getBytes(StandardCharsets.US_ASCII));
-          out.write(p.getBytes(StandardCharsets.US_ASCII));
-          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
-
-        } else if (commands.get(0).equalsIgnoreCase("lrange")) {
-          String name = commands.get(1);
-          int start = Integer.parseInt(commands.get(2));
-          int end = Integer.parseInt(commands.get(3));
-          List<String> list = lists.get(name);
-          if (list == null || list.isEmpty()) {
-            out.write("*0\r\n".getBytes(StandardCharsets.US_ASCII));
-          } else {
-            start = Math.max(start, -list.size());
-            end = Math.max(end, -list.size());
-            start = Math.min(start, list.size() - 1);
-            end = Math.min(end, list.size() - 1);
-            start = (start + list.size()) % list.size();
-            end = (end + list.size()) % list.size();
-
-            if (start >= list.size() || start > end) {
-              out.write("*0\r\n".getBytes(StandardCharsets.US_ASCII));
-            } else {
-              int len = end - start + 1;
-              out.write(("*" + len + "\r\n").getBytes(StandardCharsets.US_ASCII));
-              for (int i = start; i <= end; i++) {
-                String str = list.get(i);
-                byte[] data = str.getBytes(StandardCharsets.UTF_8);
-                out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
-                out.write(data);
-                out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
-              }
-            }
-          }
-
-        } else if (commands.get(0).equalsIgnoreCase("lpop")) {
-          String name = commands.get(1);
-          List<String> list = lists.get(name);
-          if (list == null || list.isEmpty()) {
-            out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
-          } else {
-            if (commands.size() > 2) {
-              int count = Math.min(Integer.parseInt(commands.get(2)), list.size());
-              List<String> response = new ArrayList<>();
-              while (count-- > 0) {
-                response.add(list.remove(0));
-              }
-              respArray(out, response);
-            } else {
-              String str = list.remove(0);
-              byte[] data = str.getBytes(StandardCharsets.UTF_8);
-              out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
-              out.write(data);
-              out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
-            }
-          }
-
-        } else if (commands.get(0).equalsIgnoreCase("blpop")) {
-          String key = commands.get(1);
-          final double timeoutSecsD = Double.parseDouble(commands.get(2));
-          final boolean waitForever = timeoutSecsD <= 0.0;
-
-          final long deadline = waitForever
-              ? Long.MAX_VALUE
-              : System.nanoTime() + secsToNanos(timeoutSecsD);
-          String popped = null;
-          boolean timedOut = false;
-
-          synchronized (lock) {
-            List<String> list = lists.get(key);
-            if (list != null && !list.isEmpty()) {
-              popped = list.remove(0);
-            } else {
-              Waiter me = new Waiter(client, out, key);
-              waitersByKey.computeIfAbsent(key, k -> new ArrayDeque<>()).addLast(me);
-
-              for (;;) {
-                long remaining = waitForever ? Long.MAX_VALUE : (deadline - System.nanoTime());
-                if (!waitForever && remaining <= 0L) {
-                  Deque<Waiter> q = waitersByKey.get(key);
-                  if (q != null)
-                    q.remove(me);
-                  timedOut = true;
-                  break;
-                }
-
-                try {
-                  if (waitForever) {
-                    lock.wait();
-                  } else {
-                    long ms = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(remaining);
-                    int ns = (int) (remaining - java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(ms));
-                    lock.wait(ms, ns);
-                  }
-                } catch (InterruptedException ie) {
-                  Thread.currentThread().interrupt();
-                  Deque<Waiter> q = waitersByKey.get(key);
-                  if (q != null)
-                    q.remove(me);
-                  timedOut = true;
-                  break;
-                }
-                Deque<Waiter> q = waitersByKey.get(key);
-                list = lists.get(key);
-                if (q != null && q.peekFirst() == me && list != null && !list.isEmpty()) {
-                  q.pollFirst();
-                  popped = list.remove(0);
-                  break;
-                }
-              }
-            }
-          }
-
-          if (popped != null) {
-            writeRespArray(out, java.util.List.of(key, popped));
-          } else if (timedOut) {
-            out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
-          }
-
-        } else if (commands.get(0).equalsIgnoreCase("type")) {
-          if (streams.containsKey(commands.get(1))) {
-            out.write(("+stream\r\n").getBytes());
-          } else if (entries.containsKey(commands.get(1))) {
-            out.write(("+string\r\n").getBytes());
-          } else {
-            out.write(("+none\r\n").getBytes());
-          }
-        } else if (commands.get(0).equalsIgnoreCase("xadd")) {
-          if (commands.get(2).equals("*")) {
-            commands.set(2, generateUnixId());
-          } else if (commands.get(2).split("-")[1].equals("*")) {
-            String ids[] = commands.get(2).split("-");
-            ids[1] = generateSeq(commands.get(1), ids[0]);
-            StringBuilder builder = new StringBuilder();
-            builder.append(ids[0]);
-            builder.append("-");
-            builder.append(ids[1]);
-            commands.set(2, builder.toString());
-          }
-          if (check_0(commands.get(2))) {
-            out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
-            continue;
-          }
-          HashMap<String, HashMap<String, String>> newEntries = new HashMap<>();
-          if (streams.containsKey(commands.get(1))) {
-            newEntries = streams.get(commands.get(1));
-            String last = "";
-            for (Map.Entry<String, HashMap<String, String>> entry : newEntries.entrySet()) {
-              last = entry.getKey();
-            }
-            if (check_inc(last, commands.get(2))) {
-              out.write(
-                  ("-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n")
-                      .getBytes());
-              continue;
-            }
-          }
-          HashMap<String, String> entries = new HashMap<>();
-          for (int i = 3; i < commands.size(); i += 2) {
-            entries.put(commands.get(i), commands.get(i + 1));
-          }
-          newEntries.put(commands.get(2), entries);
-          streams.put(commands.get(1), newEntries);
-          String p = commands.get(2);
-          byte[] b = p.getBytes(StandardCharsets.UTF_8);
-          out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
-          out.write(b);
-          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
-          if (locks.containsKey(commands.get(1))) {
-            synchronized (locks.get(commands.get(1))) {
-              locks.get(commands.get(1)).notifyAll();
-            }
-          }
-        } else if (commands.get(0).equalsIgnoreCase("xrange")) {
-          if (commands.get(2).equals("-")) {
-            commands.set(2, "0-0");
-          }
-          if (commands.get(3).equals("+")) {
-            long currentUnixTimeMillis = System.currentTimeMillis();
-            commands.set(3, Long.toString(currentUnixTimeMillis) + "-0");
-          }
-          if (commands.get(2).split("-").length == 1) {
-            commands.set(2, commands.get(2) + "-0");
-          }
-          if (commands.get(3).split("-").length == 1) {
-            commands.set(3, commands.get(3) + "-1000000000");
-          }
-          findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
-        } else if (commands.get(0).equalsIgnoreCase("xread")) {
-          if (commands.get(1).equalsIgnoreCase("BLOCK")) {
-            if (commands.size() == 5) {
-              readBlock(Long.parseLong(commands.get(2)), commands.get(4), getLastStart(commands.get(4)), out);
-              continue;
-            }
-            readBlock(Long.parseLong(commands.get(2)), commands.get(4), commands.get(5), out);
-            continue;
-          }
-          int len = (commands.size() - 2) / 2;
-          out.write(("*" + len + "\r\n").getBytes());
-          System.out.println("*" + len + "\r\n");
-          for (int i = 2; i < 2 + len; i++) {
-            readRange(commands.get(i), commands.get(i + len), out);
-          }
+        }
+        if (multi) {
+          queueCommands.offerLast(commands);
+          out.write("QUEUED\r\n".getBytes(StandardCharsets.US_ASCII));
+          continue;
+        }
+        if (commands.get(0).equalsIgnoreCase("multi")) {
+          multi = true;
+          out.write("OK\r\n".getBytes(StandardCharsets.US_ASCII));
+          continue;
         }
       }
     } catch (IOException ignored) {
@@ -425,6 +142,308 @@ public class Main {
       try {
         client.close();
       } catch (IOException ignore) {
+      }
+    }
+  }
+
+  static void execute(OutputStream out, List<String> commands, Socket client) throws IOException {
+    if (commands.get(0).equalsIgnoreCase("echo")) {
+      String p = commands.get(1);
+      out.write(("$" + p.getBytes(StandardCharsets.UTF_8).length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+      out.write(p.getBytes(StandardCharsets.UTF_8));
+      out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+
+    } else if (commands.get(0).equalsIgnoreCase("ping")) {
+      out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
+
+    } else if (commands.get(0).equalsIgnoreCase("set")) {
+      if (commands.size() > 3) {
+        Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
+        entries.put(commands.get(1), key);
+      } else {
+        Key key = new Key(commands.get(2), Instant.now().plusMillis(1_000_000_000L));
+        entries.put(commands.get(1), key);
+      }
+      out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
+
+    } else if (commands.get(0).equalsIgnoreCase("incr")) {
+      if (!entries.containsKey(commands.get(1))) {
+        Key key = new Key("1", Instant.now().plusMillis(1_000_000_000L));
+        entries.put(commands.get(1), key);
+        out.write((":1" + "\r\n").getBytes(StandardCharsets.US_ASCII));
+        return;
+      }
+      Key key = entries.get(commands.get(1));
+      Long val = -1L;
+      try {
+        val = Long.parseLong(key.value);
+      } catch (NumberFormatException e) {
+        out.write("-ERR value is not an integer or out of range\r\n".getBytes());
+        return;
+      }
+      val++;
+      key.value = Long.toString(val);
+      entries.put(commands.get(1), key);
+      out.write((":" + val + "\r\n").getBytes(StandardCharsets.US_ASCII));
+    } else if (commands.get(0).equalsIgnoreCase("get")) {
+      if (entries.containsKey(commands.get(1))) {
+        Key key = entries.get(commands.get(1));
+        if (Instant.now().isAfter(key.time)) {
+          entries.remove(commands.get(1));
+          out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
+        } else {
+          String p = key.value;
+          byte[] b = p.getBytes(StandardCharsets.UTF_8);
+          out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+          out.write(b);
+          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+        }
+      } else {
+        out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
+      }
+
+    } else if (commands.get(0).equalsIgnoreCase("rpush")) {
+      String name = commands.get(1);
+      synchronized (lock) {
+        List<String> entry = lists.get(name);
+        if (entry == null)
+          entry = new ArrayList<>();
+        for (int i = 2; i < commands.size(); i++)
+          entry.add(commands.get(i));
+        lists.put(name, entry);
+        lock.notifyAll();
+
+        int len = entry.size();
+        String p = Integer.toString(len);
+        out.write(":".getBytes(StandardCharsets.US_ASCII));
+        out.write(p.getBytes(StandardCharsets.US_ASCII));
+        out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+      }
+
+    } else if (commands.get(0).equalsIgnoreCase("lpush")) {
+      String name = commands.get(1);
+      synchronized (lock) {
+        List<String> entry = lists.get(name);
+        if (entry == null)
+          entry = new ArrayList<>();
+        for (int i = 2; i < commands.size(); i++)
+          entry.add(0, commands.get(i));
+        lists.put(name, entry);
+
+        lock.notifyAll();
+
+        int len = entry.size();
+        String p = Integer.toString(len);
+        out.write(":".getBytes(StandardCharsets.US_ASCII));
+        out.write(p.getBytes(StandardCharsets.US_ASCII));
+        out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+      }
+
+    } else if (commands.get(0).equalsIgnoreCase("llen")) {
+      List<String> entry = lists.get(commands.get(1));
+      int len = (entry == null) ? 0 : entry.size();
+      String p = Integer.toString(len);
+      out.write(":".getBytes(StandardCharsets.US_ASCII));
+      out.write(p.getBytes(StandardCharsets.US_ASCII));
+      out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+
+    } else if (commands.get(0).equalsIgnoreCase("lrange")) {
+      String name = commands.get(1);
+      int start = Integer.parseInt(commands.get(2));
+      int end = Integer.parseInt(commands.get(3));
+      List<String> list = lists.get(name);
+      if (list == null || list.isEmpty()) {
+        out.write("*0\r\n".getBytes(StandardCharsets.US_ASCII));
+      } else {
+        start = Math.max(start, -list.size());
+        end = Math.max(end, -list.size());
+        start = Math.min(start, list.size() - 1);
+        end = Math.min(end, list.size() - 1);
+        start = (start + list.size()) % list.size();
+        end = (end + list.size()) % list.size();
+
+        if (start >= list.size() || start > end) {
+          out.write("*0\r\n".getBytes(StandardCharsets.US_ASCII));
+        } else {
+          int len = end - start + 1;
+          out.write(("*" + len + "\r\n").getBytes(StandardCharsets.US_ASCII));
+          for (int i = start; i <= end; i++) {
+            String str = list.get(i);
+            byte[] data = str.getBytes(StandardCharsets.UTF_8);
+            out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+            out.write(data);
+            out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+          }
+        }
+      }
+
+    } else if (commands.get(0).equalsIgnoreCase("lpop")) {
+      String name = commands.get(1);
+      List<String> list = lists.get(name);
+      if (list == null || list.isEmpty()) {
+        out.write("$-1\r\n".getBytes(StandardCharsets.US_ASCII));
+      } else {
+        if (commands.size() > 2) {
+          int count = Math.min(Integer.parseInt(commands.get(2)), list.size());
+          List<String> response = new ArrayList<>();
+          while (count-- > 0) {
+            response.add(list.remove(0));
+          }
+          respArray(out, response);
+        } else {
+          String str = list.remove(0);
+          byte[] data = str.getBytes(StandardCharsets.UTF_8);
+          out.write(("$" + data.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+          out.write(data);
+          out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+        }
+      }
+
+    } else if (commands.get(0).equalsIgnoreCase("blpop")) {
+      String key = commands.get(1);
+      final double timeoutSecsD = Double.parseDouble(commands.get(2));
+      final boolean waitForever = timeoutSecsD <= 0.0;
+
+      final long deadline = waitForever
+          ? Long.MAX_VALUE
+          : System.nanoTime() + secsToNanos(timeoutSecsD);
+      String popped = null;
+      boolean timedOut = false;
+
+      synchronized (lock) {
+        List<String> list = lists.get(key);
+        if (list != null && !list.isEmpty()) {
+          popped = list.remove(0);
+        } else {
+          Waiter me = new Waiter(client, out, key);
+          waitersByKey.computeIfAbsent(key, k -> new ArrayDeque<>()).addLast(me);
+
+          for (;;) {
+            long remaining = waitForever ? Long.MAX_VALUE : (deadline - System.nanoTime());
+            if (!waitForever && remaining <= 0L) {
+              Deque<Waiter> q = waitersByKey.get(key);
+              if (q != null)
+                q.remove(me);
+              timedOut = true;
+              break;
+            }
+
+            try {
+              if (waitForever) {
+                lock.wait();
+              } else {
+                long ms = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(remaining);
+                int ns = (int) (remaining - java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(ms));
+                lock.wait(ms, ns);
+              }
+            } catch (InterruptedException ie) {
+              Thread.currentThread().interrupt();
+              Deque<Waiter> q = waitersByKey.get(key);
+              if (q != null)
+                q.remove(me);
+              timedOut = true;
+              break;
+            }
+            Deque<Waiter> q = waitersByKey.get(key);
+            list = lists.get(key);
+            if (q != null && q.peekFirst() == me && list != null && !list.isEmpty()) {
+              q.pollFirst();
+              popped = list.remove(0);
+              break;
+            }
+          }
+        }
+      }
+
+      if (popped != null) {
+        writeRespArray(out, java.util.List.of(key, popped));
+      } else if (timedOut) {
+        out.write("*-1\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+      }
+
+    } else if (commands.get(0).equalsIgnoreCase("type")) {
+      if (streams.containsKey(commands.get(1))) {
+        out.write(("+stream\r\n").getBytes());
+      } else if (entries.containsKey(commands.get(1))) {
+        out.write(("+string\r\n").getBytes());
+      } else {
+        out.write(("+none\r\n").getBytes());
+      }
+    } else if (commands.get(0).equalsIgnoreCase("xadd")) {
+      if (commands.get(2).equals("*")) {
+        commands.set(2, generateUnixId());
+      } else if (commands.get(2).split("-")[1].equals("*")) {
+        String ids[] = commands.get(2).split("-");
+        ids[1] = generateSeq(commands.get(1), ids[0]);
+        StringBuilder builder = new StringBuilder();
+        builder.append(ids[0]);
+        builder.append("-");
+        builder.append(ids[1]);
+        commands.set(2, builder.toString());
+      }
+      if (check_0(commands.get(2))) {
+        out.write(("-ERR The ID specified in XADD must be greater than 0-0\r\n").getBytes());
+        return;
+      }
+      HashMap<String, HashMap<String, String>> newEntries = new HashMap<>();
+      if (streams.containsKey(commands.get(1))) {
+        newEntries = streams.get(commands.get(1));
+        String last = "";
+        for (Map.Entry<String, HashMap<String, String>> entry : newEntries.entrySet()) {
+          last = entry.getKey();
+        }
+        if (check_inc(last, commands.get(2))) {
+          out.write(
+              ("-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n")
+                  .getBytes());
+          return;
+        }
+      }
+      HashMap<String, String> entries = new HashMap<>();
+      for (int i = 3; i < commands.size(); i += 2) {
+        entries.put(commands.get(i), commands.get(i + 1));
+      }
+      newEntries.put(commands.get(2), entries);
+      streams.put(commands.get(1), newEntries);
+      String p = commands.get(2);
+      byte[] b = p.getBytes(StandardCharsets.UTF_8);
+      out.write(("$" + b.length + "\r\n").getBytes(StandardCharsets.US_ASCII));
+      out.write(b);
+      out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+      if (locks.containsKey(commands.get(1))) {
+        synchronized (locks.get(commands.get(1))) {
+          locks.get(commands.get(1)).notifyAll();
+        }
+      }
+    } else if (commands.get(0).equalsIgnoreCase("xrange")) {
+      if (commands.get(2).equals("-")) {
+        commands.set(2, "0-0");
+      }
+      if (commands.get(3).equals("+")) {
+        long currentUnixTimeMillis = System.currentTimeMillis();
+        commands.set(3, Long.toString(currentUnixTimeMillis) + "-0");
+      }
+      if (commands.get(2).split("-").length == 1) {
+        commands.set(2, commands.get(2) + "-0");
+      }
+      if (commands.get(3).split("-").length == 1) {
+        commands.set(3, commands.get(3) + "-1000000000");
+      }
+      findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
+    } else if (commands.get(0).equalsIgnoreCase("xread")) {
+      if (commands.get(1).equalsIgnoreCase("BLOCK")) {
+        if (commands.size() == 5) {
+          readBlock(Long.parseLong(commands.get(2)), commands.get(4), getLastStart(commands.get(4)), out);
+          return;
+        }
+        readBlock(Long.parseLong(commands.get(2)), commands.get(4), commands.get(5), out);
+        return;
+      }
+      int len = (commands.size() - 2) / 2;
+      out.write(("*" + len + "\r\n").getBytes());
+      System.out.println("*" + len + "\r\n");
+      for (int i = 2; i < 2 + len; i++) {
+        readRange(commands.get(i), commands.get(i + len), out);
       }
     }
   }
