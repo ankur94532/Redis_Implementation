@@ -173,6 +173,7 @@ public class Main {
 
   static void handle(Socket client) throws IOException {
     try {
+      System.out.println("hi");
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[8192];
@@ -268,6 +269,7 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client) throws IOException {
+    System.out.println("hlo");
     OutputStream out = client.getOutputStream();
     boolean isMaster = false;
     if (client.getLocalPort() == master) {
