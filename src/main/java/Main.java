@@ -87,7 +87,7 @@ public class Main {
           System.out.println("used+" + used);
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
-            System.out.println(k);
+            System.out.println("k " + k);
             if (k == -1) {
               break;
             }
