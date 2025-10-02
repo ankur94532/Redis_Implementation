@@ -10,6 +10,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +32,7 @@ public class Main {
   static HashMap<String, HashMap<String, HashMap<String, String>>> streams = new HashMap<>();
   static final Object lock = new Object();
   static HashMap<String, Object> locks = new HashMap<>();
-  Map<Integer, ServerSocket> servers = new HashMap<>();
+  static Map<Integer, ServerSocket> servers = new HashMap<>();
 
   static final class Waiter {
     final Socket client;
@@ -48,7 +49,20 @@ public class Main {
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
     int port = 6379;
-    final ServerSocket serverSocket = new ServerSocket(port);
+    if (System.console() != null) {
+      Scanner sc = new Scanner(System.in);
+      String input = sc.nextLine();
+      String[] inputs = input.split(" ");
+      port = Integer.parseInt(inputs[input.length() - 1]);
+      sc.close();
+    }
+    ServerSocket serverSocket;
+    if (servers.containsKey(port)) {
+      serverSocket = servers.get(port);
+    } else {
+      serverSocket = new ServerSocket(port);
+      servers.put(port, serverSocket);
+    }
     serverSocket.setReuseAddress(true);
     try {
       while (true) {
@@ -116,9 +130,6 @@ public class Main {
          * System.out.println(command);
          * }
          */
-        for (String str : commands) {
-          System.out.println(str);
-        }
         if (commands.get(0).equalsIgnoreCase("discard")) {
           if (!multi) {
             out.write("-ERR DISCARD without MULTI\r\n".getBytes());
