@@ -30,6 +30,7 @@ public class Main {
         if (toks.length == 2) {
           masterHost = toks[0];
           masterPort = Integer.parseInt(toks[1]);
+          System.out.println("master here");
           isReplica = true;
         }
       }
