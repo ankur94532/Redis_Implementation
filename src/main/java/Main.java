@@ -201,7 +201,9 @@ public class Main {
   }
 
   static void execute(OutputStream out, List<String> commands, Socket client) throws IOException {
-    if (commands.get(0).equalsIgnoreCase("info")) {
+    if (commands.get(0).equalsIgnoreCase("REPLCONF")) {
+      out.write("+OK\r\n".getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("info")) {
       int port = client.getLocalPort();
       if (masters.containsKey(port)) {
         out.write("$10\r\nrole:slave\r\n".getBytes());
