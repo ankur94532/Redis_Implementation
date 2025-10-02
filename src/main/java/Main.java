@@ -94,9 +94,12 @@ public class Main {
 
   // ---- Client handler ----
   static void handleClient(Socket c, int myPort) throws Exception {
+    System.out.println("hi");
     if (isReplica)
       initialSyncDone.await(); // block until initial RDB is consumed
+    System.out.println("hi");
     c.setTcpNoDelay(true);
+    System.out.println("hi");
     InputStream in = c.getInputStream();
     OutputStream out = c.getOutputStream();
 
