@@ -190,7 +190,6 @@ public class Main {
           continue;
         }
         execute(commands, client);
-        client.getOutputStream().flush();
       }
     } catch (IOException ignored) {
     } finally {
@@ -202,9 +201,9 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client) throws IOException {
+    System.out.println("hi");
     OutputStream out = System.out;
     if (client.getLocalPort() != master) {
-      System.out.println("hey");
       out = client.getOutputStream();
     }
     if (commands.get(0).equalsIgnoreCase("psync")) {
