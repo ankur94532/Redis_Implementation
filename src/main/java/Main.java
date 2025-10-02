@@ -99,9 +99,10 @@ public class Main {
               start = i + 1;
             }
           }
+          buf[used] = 10;
+          used++;
           byte[] buf1 = new byte[8192];
           for (int i = start; i < used; i++) {
-            System.out.println(buf[i]);
             buf1[i - start] = buf[i];
           }
           used -= start;
@@ -142,12 +143,6 @@ public class Main {
               sb.append((char) buf[i]);
               i++;
             }
-          }
-          if (sb.length() > 0) {
-            commands.add(sb.toString());
-          }
-          if (commands.size() > 0) {
-            execute(commands, masterSock);
           }
         }
       }
