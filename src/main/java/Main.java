@@ -30,7 +30,6 @@ public class Main {
         if (toks.length == 2) {
           masterHost = toks[0];
           masterPort = Integer.parseInt(toks[1]);
-          System.out.println("master here");
           isReplica = true;
         }
       }
@@ -77,11 +76,6 @@ public class Main {
 
     // ---- Server accept loop ----
     try (ServerSocket srv = new ServerSocket(port)) {
-      if (isReplica) {
-        System.out.println("main sucker");
-      } else {
-        System.out.println("non main sucker");
-      }
       srv.setReuseAddress(true);
       while (true) {
         Socket c = srv.accept();
@@ -102,8 +96,9 @@ public class Main {
 
   // ---- Client handler ----
   static void handleClient(Socket c, int myPort) throws Exception {
-    initialSyncDone.await(); // don’t answer before RDB done (if replica)
+    initialSyncDone.await();
     c.setTcpNoDelay(true);
+    System.out.println(c.getLocalPort() + " " + masterPort);
     InputStream in = c.getInputStream();
     OutputStream out = c.getOutputStream();
 
