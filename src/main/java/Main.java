@@ -111,27 +111,24 @@ public class Main {
           StringBuilder sb = new StringBuilder();
           System.out.println("hey");
           for (int i = 0; i < used; i++) {
-            System.out.println(buf[i]);
-          }
-          for (int i = 0; i < used; i++) {
-            if (buf[i] == '*' && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+            if (buf[i] == 42 && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               i++;
               while (i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
                 i++;
               }
-            } else if (buf[i] == '$' && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
+            } else if (buf[i] == 36 && i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
               i++;
               while (i + 1 < used && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
                 i++;
               }
-            } else if (buf[i] == '\r') {
+            } else if (buf[i] == 13) {
               i++;
-            } else if (buf[i] == '\n') {
+            } else if (buf[i] == 10) {
               if (sb.length() > 0) {
                 commands.add(sb.toString());
               }
               sb.setLength(0);
-              if (i + 1 == used || buf[i + 1] == '*') {
+              if (i + 1 == used || buf[i + 1] == 42) {
                 execute(commands, masterSock);
                 for (String str : commands) {
                   System.out.println(str);
@@ -140,6 +137,7 @@ public class Main {
               }
               i++;
             } else {
+              System.out.println((char) buf[i]);
               sb.append((char) buf[i]);
               i++;
             }
