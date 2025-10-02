@@ -137,6 +137,13 @@ public class Main {
           }
           out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
 
+        } else if (commands.get(0).equalsIgnoreCase("incr")) {
+          Key key = entries.get(commands.get(1));
+          Long val = Long.parseLong(key.value);
+          val++;
+          key.value = Long.toString(val);
+          entries.put(commands.get(1), key);
+          out.write((":" + val + "\r\n").getBytes(StandardCharsets.US_ASCII));
         } else if (commands.get(0).equalsIgnoreCase("get")) {
           if (entries.containsKey(commands.get(1))) {
             Key key = entries.get(commands.get(1));
