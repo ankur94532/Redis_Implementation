@@ -140,7 +140,6 @@ public class Main {
         }
       }
     }
-    System.out.println(tasks.size());
     try {
       while (true) {
         Socket clientSocket = serverSocket.accept();
@@ -159,6 +158,7 @@ public class Main {
 
   static void handle(Socket client) throws IOException {
     try {
+      System.out.println("hi " + client.getLocalPort());
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
       byte[] buf = new byte[8192];
