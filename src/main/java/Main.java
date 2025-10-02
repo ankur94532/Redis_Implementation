@@ -526,6 +526,9 @@ public class Main {
         readRange(commands.get(i), commands.get(i + len), out);
       }
     }
+    if (!slaves.containsKey(port)) {
+      return;
+    }
     String str = commands.get(0);
     if (str.equalsIgnoreCase("set") || str.equalsIgnoreCase("incr") || str.equalsIgnoreCase("rpush")
         || str.equalsIgnoreCase("lpush") || str.equalsIgnoreCase("lpop") || str.equalsIgnoreCase("blpop")
