@@ -238,6 +238,9 @@ public class Main {
       out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
 
     } else if (commands.get(0).equalsIgnoreCase("set")) {
+      for (String cmd : commands) {
+        System.out.println(cmd);
+      }
       if (commands.size() > 3) {
         Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
         entries.put(commands.get(1), key);
