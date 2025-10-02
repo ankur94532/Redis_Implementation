@@ -100,7 +100,7 @@ public class Main {
             }
           }
           for (int i = start; i < used; i++) {
-            System.out.println(buf[i]);
+            System.out.println((char) buf[i]);
           }
         }
       }
