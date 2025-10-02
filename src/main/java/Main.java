@@ -79,7 +79,7 @@ public class Main {
           mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
           String data = "*3\r\n$8\r\nREPLCONF\r\n$14\r\n" + Integer.toString(port) + "\r\n$4\r\n6380\r\n";
           mout.write(data.getBytes());
-          mout.write("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n".getBytes());
+          // mout.write("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n".getBytes());
         }
       }
     }
