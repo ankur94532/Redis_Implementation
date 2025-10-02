@@ -121,6 +121,7 @@ public class Main {
               }
               i++;
             }
+            used += n;
             for (String str : commands) {
               System.out.println(str);
             }
