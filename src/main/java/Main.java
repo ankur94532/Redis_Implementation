@@ -96,7 +96,7 @@ public class Main {
                 sb.setLength(0);
               }
               i++;
-              while (buf[i] >= 48 && buf[i] <= 57) {
+              while (i < k && buf[i] >= 48 && buf[i] <= 57) {
                 i++;
               }
               masterCommands.add(commands);
@@ -107,7 +107,7 @@ public class Main {
                 sb.setLength(0);
               }
               i++;
-              while (buf[i] >= 48 && buf[i] <= 57) {
+              while (i < k && buf[i] >= 48 && buf[i] <= 57) {
                 i++;
               }
             } else {
