@@ -87,7 +87,7 @@ public class Main {
           buf = new byte[8192];
           k = masterSock.getInputStream().read(buf, k, buf.length - k);
           for (int i = 0; i < k; i++) {
-            System.out.println(buf[i]);
+            System.out.println((char) buf[i]);
           }
           mout.flush();
         }
