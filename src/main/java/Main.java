@@ -46,6 +46,7 @@ public class Main {
   static Map<Integer, Set<Socket>> slaves = new HashMap<>();
   static int port = 6379;
   static int master = -1;
+  static Map<Socket, Integer> lastAck = new ConcurrentHashMap<>();
 
   static final class Waiter {
     final Socket client;
@@ -180,6 +181,12 @@ public class Main {
         if (k == -1) {
           break;
         }
+        int last = 0;
+        if (lastAck.containsKey(client)) {
+          last = lastAck.get(client);
+        }
+        last++;
+        lastAck.put(client, last);
         List<String> commands = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         for (int i = used; i < used + k;) {
@@ -260,36 +267,20 @@ public class Main {
     }
   }
 
-  static int work(Socket client, int timeoutMs) {
-    try {
-      OutputStream out = client.getOutputStream();
-      // Ask for ACKs
-      out.write(
-          "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
-      out.flush();
-      byte[] buf = new byte[8192];
-      int used = 0;
-      while (true) {
-        int n = client.getInputStream().read(buf, used, buf.length - used);
-        System.out.println(n + " " + client.getPort());
-        if (n != -1) {
-          break;
-        }
-        used += n;
-      }
-      if (used > 0) {
-        System.out.println("got here");
-        return 1;
-      }
-
-    } catch (
-
-    java.net.SocketTimeoutException ste) {
-      // no ACK within timeout -> count as 0
-    } catch (IOException ioe) {
-      // network error -> count as 0
+  static int work(Socket client, int timeoutMs) throws IOException {
+    OutputStream out = client.getOutputStream();
+    // Ask for ACKs
+    int last = 0;
+    if (lastAck.containsKey(client)) {
+      last = lastAck.get(client);
     }
-    return 0;
+    out.write(
+        "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+    int last2 = 0;
+    if (lastAck.containsKey(client)) {
+      last2 = lastAck.get(client);
+    }
+    return last2 > last ? 1 : 0;
   }
 
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
