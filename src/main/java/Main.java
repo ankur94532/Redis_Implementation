@@ -158,7 +158,7 @@ public class Main {
     try {
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
-      byte[] buf = new byte[100000];
+      byte[] buf = new byte[8192];
       int used = 0;
       boolean multi = false;
       Deque<List<String>> queueCommands = new ArrayDeque<>();
@@ -593,7 +593,7 @@ public class Main {
       findByRange(streams.get(commands.get(1)), commands.get(2), commands.get(3), out);
     } else if (commands.get(0).equalsIgnoreCase("xread")) {
       if (commands.get(1).equalsIgnoreCase("BLOCK")) {
-        if (commands.size() == 5) {
+        if (commands.size() == 6) {
           readBlock(Long.parseLong(commands.get(2)), commands.get(4), getLastStart(commands.get(4)), out);
           return;
         }
