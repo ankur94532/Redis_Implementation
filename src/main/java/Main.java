@@ -268,8 +268,15 @@ public class Main {
           "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
       out.flush();
       byte[] buf = new byte[8192];
-      int n = client.getInputStream().read(buf, 0, buf.length);
-      if (n != -1) {
+      int used = 0;
+      while (true) {
+        int n = client.getInputStream().read(buf, used, buf.length - used);
+        if (n != -1) {
+          break;
+        }
+        used += n;
+      }
+      if (used > 0) {
         System.out.println("got here");
         return 1;
       }
