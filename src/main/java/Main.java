@@ -310,7 +310,7 @@ public class Main {
         Socket skt = slaveList.get(i);
         tasks.add(() -> work(skt, timeout));
       }
-      List<Future<Integer>> futures = pool.invokeAll(tasks, timeout, TimeUnit.MILLISECONDS);
+      List<Future<Integer>> futures = pool.invokeAll(tasks);
       for (Future<Integer> f : futures) {
         try {
           count += f.get();
