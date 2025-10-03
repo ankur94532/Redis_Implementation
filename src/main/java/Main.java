@@ -317,6 +317,10 @@ public class Main {
         out.write(":0\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
       }
+      if (!lastAck.containsKey(client)) {
+        out.write((":" + slaves.size() + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        return;
+      }
       int req = Integer.parseInt(commands.get(1));
       int timeout = Integer.parseInt(commands.get(2));
       Set<Socket> slaveSet = slaves.get(port);
