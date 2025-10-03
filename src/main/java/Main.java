@@ -267,22 +267,37 @@ public class Main {
     }
   }
 
-  static int work(Socket client, int timeoutMs) throws IOException, InterruptedException {
-    OutputStream out = client.getOutputStream();
-    // Ask for ACKs
-    int last = 0;
-    if (lastAck.containsKey(client)) {
-      last = lastAck.get(client);
+  // Parallel GETACK-and-wait for a single replica
+  static int work(Socket client, int timeoutMs) {
+    final long start = System.nanoTime();
+    final long deadline = start + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+    try {
+      OutputStream out = client.getOutputStream();
+
+      // Snapshot current ACK offset for this socket (default very small)
+      final int before = lastAck.getOrDefault(client, Integer.MIN_VALUE);
+
+      // Ask for ACKs
+      out.write("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"
+          .getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+      out.flush();
+
+      // Poll until ACK offset increases or we hit the deadline
+      while (System.nanoTime() < deadline) {
+        int now = lastAck.getOrDefault(client, Integer.MIN_VALUE);
+        if (now > before)
+          return 1; // got a newer ACK for this socket
+        try {
+          Thread.sleep(1);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          return 0;
+        }
+      }
+    } catch (IOException ioe) {
+      return 0;
     }
-    out.write(
-        "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
-    Thread.currentThread();
-    Thread.sleep(Math.max(1000, timeoutMs));
-    int last2 = 0;
-    if (lastAck.containsKey(client)) {
-      last2 = lastAck.get(client);
-    }
-    return last2 > last ? 1 : 0;
+    return 0; // timeout/no ACK
   }
 
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
