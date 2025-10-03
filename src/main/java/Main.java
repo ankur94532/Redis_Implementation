@@ -244,6 +244,10 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client, boolean isMaster, int used) throws IOException {
+    for (String str : commands) {
+      System.out.print(str + " ");
+    }
+    System.out.println();
     OutputStream out = client.getOutputStream();
     if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
@@ -287,7 +291,6 @@ public class Main {
         out.write("+PONG\r\n".getBytes(StandardCharsets.US_ASCII));
       }
     } else if (commands.get(0).equalsIgnoreCase("set")) {
-      System.out.println("inside set " + commands.get(1) + " " + commands.get(2));
       if (commands.size() > 3) {
         Key key = new Key(commands.get(2), Instant.now().plusMillis(Long.parseLong(commands.get(4))));
         entries.put(commands.get(1), key);
