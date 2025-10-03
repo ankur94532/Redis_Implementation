@@ -267,7 +267,7 @@ public class Main {
     }
   }
 
-  static int work(Socket client, int timeoutMs) throws IOException {
+  static int work(Socket client, int timeoutMs) throws IOException, InterruptedException {
     OutputStream out = client.getOutputStream();
     // Ask for ACKs
     int last = 0;
@@ -276,6 +276,8 @@ public class Main {
     }
     out.write(
         "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+    Thread.currentThread();
+    Thread.sleep(timeoutMs);
     int last2 = 0;
     if (lastAck.containsKey(client)) {
       last2 = lastAck.get(client);
@@ -307,7 +309,7 @@ public class Main {
         Socket skt = slaveList.get(i);
         tasks.add(() -> work(skt, timeout));
       }
-      List<Future<Integer>> futures = pool.invokeAll(tasks, timeout, TimeUnit.MILLISECONDS);
+      List<Future<Integer>> futures = pool.invokeAll(tasks);
       for (Future<Integer> f : futures) {
         try {
           count += f.get();
