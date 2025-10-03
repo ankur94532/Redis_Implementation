@@ -287,10 +287,12 @@ public class Main {
 
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
       throws IOException, InterruptedException {
-    System.out.println("hi");
-    for (String str : commands) {
-      System.out.print(str + " ");
-    }
+    /*
+     * System.out.println("hi");
+     * for (String str : commands) {
+     * System.out.print(str + " ");
+     * }
+     */
     System.out.println();
     OutputStream out = client.getOutputStream();
     if (commands.get(0).equalsIgnoreCase("wait")) {
@@ -317,7 +319,8 @@ public class Main {
         }
       }
       pool.shutdownNow();
-      out.write(("*1\r\n:" + count + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+      System.out.println(count);
+      out.write((":" + count + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
     } else if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
       byte[] str = HexFormat.of().parseHex(
