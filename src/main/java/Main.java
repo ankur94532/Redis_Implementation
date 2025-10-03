@@ -319,7 +319,7 @@ public class Main {
         out.write(":0\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
       }
-      if (lastAck.get(client) == 0) {
+      if (!lastAck.containsKey(client)) {
         System.out.println("hi");
         out.write((":" + slaves.get(port).size() + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
