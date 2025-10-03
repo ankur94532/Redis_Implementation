@@ -17,6 +17,7 @@ import java.util.Set;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -310,11 +311,11 @@ public class Main {
         Socket skt = slaveList.get(i);
         tasks.add(() -> work(skt, timeout));
       }
-      List<Future<Integer>> futures = pool.invokeAll(tasks);
+      List<Future<Integer>> futures = pool.invokeAll(tasks, timeout, TimeUnit.MILLISECONDS);
       for (Future<Integer> f : futures) {
         try {
           count += f.get();
-        } catch (ExecutionException e) {
+        } catch (CancellationException | ExecutionException e) {
         } finally {
         }
       }
