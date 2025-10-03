@@ -317,7 +317,7 @@ public class Main {
         out.write(":0\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
       }
-      if (!lastAck.containsKey(client)) {
+      if (lastAck.get(client) == 1) {
         out.write((":" + slaves.size() + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
       }
