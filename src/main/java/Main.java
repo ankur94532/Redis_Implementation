@@ -318,6 +318,7 @@ public class Main {
         return;
       }
       if (lastAck.get(client) == 1) {
+        System.out.println("hi");
         out.write((":" + slaves.size() + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
       }
