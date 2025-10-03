@@ -82,16 +82,20 @@ public class Main {
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           int last = -1;
-          int file = 0;
+          int first = 0;
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             System.out.println("k " + k);
-            if (file == 0) {
-              used += k;
-              last = used;
-              if (k > 100) {
-                file++;
+            if (last == -1) {
+              for (int i = used; i < used + k; i++) {
+                if (buf[i] < 0) {
+                  last = i + 1;
+                  first = 1;
+                }
               }
+            }
+            if (last == -1) {
+              used += k;
               continue;
             }
             if (k == -1) {
@@ -100,7 +104,7 @@ public class Main {
             System.out.println("got here " + k);
             List<String> commands = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
-            for (int i = used; i < used + k;) {
+            for (int i = first > 0 ? last : used; i < used + k;) {
               if (buf[i] == 42 && i + 1 < used + k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
                 i++;
                 while (i < used + k && buf[i] >= 48 && buf[i] <= 57) {
@@ -120,7 +124,7 @@ public class Main {
                 sb.setLength(0);
                 if (i + 1 == used + k
                     || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
-                  execute(commands, masterSock, true, used + k - 37 - last);
+                  execute(commands, masterSock, true, used + k - last);
                   commands.clear();
                 }
                 i++;
@@ -129,6 +133,7 @@ public class Main {
                 i++;
               }
             }
+            first = 0;
             used += k;
           }
         } catch (IOException e) {
