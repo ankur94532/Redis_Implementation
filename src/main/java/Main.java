@@ -83,10 +83,8 @@ public class Main {
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           int last = -1;
           int first = 0;
-          System.out.println(used);
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
-            System.out.println("k " + k);
             if (last == -1) {
               for (int i = used; i < used + k; i++) {
                 if (buf[i] < 0) {
@@ -102,7 +100,6 @@ public class Main {
             if (k == -1) {
               break;
             }
-            System.out.println("got here " + k + " first " + first + " last " + last + " final limit " + (used + k));
             List<String> commands = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             for (int i = first > 0 ? last : used; i < used + k;) {
@@ -198,8 +195,8 @@ public class Main {
             sb.append((char) buf[i]);
             i++;
           }
-          used += k;
         }
+        used += k;
         if (commands.get(0).equalsIgnoreCase("discard")) {
           if (!multi) {
             out.write("-ERR DISCARD without MULTI\r\n".getBytes());
