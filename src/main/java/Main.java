@@ -81,13 +81,12 @@ public class Main {
           mout.write("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$3\r\neof\r\n".getBytes());
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
-          List<Integer> indices = new ArrayList<>();
-          indices.add(used);
-          System.out.println("used+" + used);
+          int last = -1;
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             if (k > 100) {
               used += k;
+              last = used;
               continue;
             }
             System.out.println("k " + k);
@@ -116,9 +115,8 @@ public class Main {
                 sb.setLength(0);
                 if (i + 1 == used + k
                     || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
-                  execute(commands, masterSock, true, indices.getLast() - indices.getFirst());
+                  execute(commands, masterSock, true, used - last);
                   commands.clear();
-                  indices.add(i + 1);
                 }
                 i++;
               } else {
