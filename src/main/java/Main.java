@@ -261,20 +261,11 @@ public class Main {
 
   static int work(Socket client) throws IOException {
     System.out.println("here");
+    client.getOutputStream().write("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"
+        .getBytes(java.nio.charset.StandardCharsets.US_ASCII));
     byte[] buf = new byte[8192];
-    int used = 0;
-    while (true) {
-      int n = 0;
-      n = client.getInputStream().read(buf, used, buf.length - used);
-      if (n == -1) {
-        break;
-      }
-      used += n;
-    }
-    if (used > 0) {
-      return 1;
-    }
-    return 0;
+    int n = client.getInputStream().read(buf, 0, buf.length);
+    return n > 0 ? 1 : 0;
   }
 
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
