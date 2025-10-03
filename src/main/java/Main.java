@@ -266,6 +266,7 @@ public class Main {
     byte[] buf = new byte[8192];
     int used = 0;
     while (true) {
+      System.out.println(Thread.currentThread().getName() + " here");
       int n = client.getInputStream().read(buf, used, buf.length - used);
       if (n == -1) {
         break;
