@@ -260,7 +260,7 @@ public class Main {
     }
     System.out.println();
     OutputStream out = client.getOutputStream();
-    if (commands.get(0).equals("wait")) {
+    if (commands.get(0).equalsIgnoreCase("wait")) {
       out.write(":0\r\n".getBytes());
     } else if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
