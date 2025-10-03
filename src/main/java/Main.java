@@ -248,6 +248,7 @@ public class Main {
   }
 
   static void execute(List<String> commands, Socket client, boolean isMaster, int used) throws IOException {
+    System.out.println("hi");
     for (String str : commands) {
       System.out.print(str + " ");
     }
