@@ -80,7 +80,7 @@ public class Main {
           byte[] buf = new byte[8192];
           int used = 0;
           OutputStream mout = masterSock.getOutputStream();
-          mout.write("*1\r\n\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+          mout.write("*1\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
           String data = "*3\r\n\r\nREPLCONF\r\n\r\nlistening-port" + "\r\n\r\n" + Integer.toString(port)
               + "\r\n";
