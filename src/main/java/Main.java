@@ -280,6 +280,7 @@ public class Main {
     if (lastAck.containsKey(client)) {
       last2 = lastAck.get(client);
     }
+    System.out.println(last + " " + last2);
     return last2 > last ? 1 : 0;
   }
 
