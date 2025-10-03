@@ -343,6 +343,7 @@ public class Main {
         String str = Integer.toString(used);
         String data = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n" + "$" + str.length() + "\r\n" + str + "\r\n";
         out.write(data.getBytes());
+        out.flush();
         return;
       }
       out.write("+OK\r\n".getBytes());
