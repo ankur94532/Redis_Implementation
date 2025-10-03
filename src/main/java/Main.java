@@ -259,22 +259,30 @@ public class Main {
     }
   }
 
-  static int work(Socket client) throws IOException {
-    System.out.println("here");
-    client.getOutputStream().write("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"
-        .getBytes(java.nio.charset.StandardCharsets.US_ASCII));
-    byte[] buf = new byte[8192];
-    int used = 0;
-    while (true) {
-      System.out.println(Thread.currentThread().getName() + " here");
-      int n = client.getInputStream().read(buf, used, buf.length - used);
-      if (n == -1) {
-        break;
+  static int work(Socket client, int timeoutMs) {
+    try {
+      OutputStream out = client.getOutputStream();
+      // Ask for ACKs
+      out.write(
+          "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+      out.flush();
+
+      // Bound the read
+      client.setSoTimeout(timeoutMs);
+      byte[] buf = new byte[8192];
+      int n = client.getInputStream().read(buf, 0, buf.length);
+      if (n != -1) {
+        return 1;
       }
-      used += n;
+
+    } catch (
+
+    java.net.SocketTimeoutException ste) {
+      // no ACK within timeout -> count as 0
+    } catch (IOException ioe) {
+      // network error -> count as 0
     }
-    System.out.println(Thread.currentThread().getName() + " loop completed");
-    return used > 0 ? 1 : 0;
+    return 0;
   }
 
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
@@ -300,7 +308,7 @@ public class Main {
       List<Callable<Integer>> tasks = new ArrayList<>();
       for (int i = 0; i < slave.size(); i++) {
         Socket skt = slaveList.get(i);
-        tasks.add(() -> work(skt));
+        tasks.add(() -> work(skt, timeout));
       }
       List<Future<Integer>> futures = pool.invokeAll(tasks, timeout, TimeUnit.MILLISECONDS);
       for (Future<Integer> f : futures) {
