@@ -270,6 +270,7 @@ public class Main {
       byte[] buf = new byte[8192];
       int n = client.getInputStream().read(buf, 0, buf.length);
       if (n != -1) {
+        System.out.println("got here");
         return 1;
       }
 
