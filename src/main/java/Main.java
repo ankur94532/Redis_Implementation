@@ -317,7 +317,7 @@ public class Main {
         out.write(":0\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
       }
-
+      int req = Integer.parseInt(commands.get(1));
       int timeout = Integer.parseInt(commands.get(2));
       Set<Socket> slaveSet = slaves.get(port);
       ExecutorService pool = Executors.newFixedThreadPool(Math.min(slaveSet.size(), 32));
@@ -333,6 +333,9 @@ public class Main {
           try {
             if (!f.isCancelled()) {
               count += f.get(0, TimeUnit.MILLISECONDS);
+              if (count == req) {
+                break;
+              }
             }
           } catch (Exception ignore) {
           }
@@ -708,7 +711,6 @@ public class Main {
     if (str.equalsIgnoreCase("set") || str.equalsIgnoreCase("incr") || str.equalsIgnoreCase("rpush")
         || str.equalsIgnoreCase("lpush") || str.equalsIgnoreCase("lpop") || str.equalsIgnoreCase("blpop")
         || str.equalsIgnoreCase("xadd")) {
-      System.out.println("directing to slaves");
       for (Socket socket : slaves.get(port)) {
         respArray(socket.getOutputStream(), commands);
       }
@@ -931,7 +933,6 @@ public class Main {
   }
 
   static void respArray(OutputStream out, List<String> response) throws IOException {
-    System.out.println("hi slave");
     out.write(("*" + response.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
     for (String s : response) {
       if (s == null) {
