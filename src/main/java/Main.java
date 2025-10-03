@@ -82,12 +82,16 @@ public class Main {
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
           mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
           int last = -1;
+          int file = 0;
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             System.out.println("k " + k);
-            if (k > 100) {
+            if (file == 0) {
               used += k;
               last = used;
+              if (k > 100) {
+                file++;
+              }
               continue;
             }
             if (k == -1) {
