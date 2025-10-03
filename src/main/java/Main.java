@@ -75,79 +75,116 @@ public class Main {
     serverSocket.setReuseAddress(true);
     if (args.length > 2 && args[2].equals("--replicaof")) {
       master = Integer.parseInt(args[3].split(" ")[1]);
-      new Thread(() -> {
-        try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
-          byte[] buf = new byte[8192];
-          int used = 0;
-          OutputStream mout = masterSock.getOutputStream();
-          mout.write("*1\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
-          used += masterSock.getInputStream().read(buf, used, buf.length - used);
-          String data = "*3\r\n\r\nREPLCONF\r\n\r\nlistening-port" + "\r\n\r\n" + Integer.toString(port)
-              + "\r\n";
-          mout.write(data.getBytes());
-          used += masterSock.getInputStream().read(buf, used, buf.length - used);
-          mout.write("*3\r\n\r\nREPLCONF\r\n\r\ncapa\r\n\r\neof\r\n".getBytes());
-          used += masterSock.getInputStream().read(buf, used, buf.length - used);
-          mout.write("*3\r\n\r\nPSYNC\r\nExecutionException\r\n?\r\ne\r\n-1\r\n".getBytes());
-          int last = -1;
-          int first = 0;
-          while (true) {
-            if (used == buf.length) {
-              buf = java.util.Arrays.copyOf(buf, buf.length * 2);
-            }
-            int k = masterSock.getInputStream().read(buf, used, buf.length - used);
-            if (last == -1) {
-              for (int i = used; i < used + k; i++) {
-                if (buf[i] < 0) {
-                  last = i + 1;
-                  first = 1;
+      new Thread(
+          () -> {
+            try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
+              byte[] buf = new byte[8192];
+              int used = 0;
+              OutputStream mout = masterSock.getOutputStream();
+              mout.write(
+                  "*1\r\n$4\r\nPING\r\n"
+                      .getBytes(
+                          java.nio.charset.StandardCharsets.US_ASCII));
+              used += masterSock
+                  .getInputStream()
+                  .read(buf, used, buf.length - used);
+              String data = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port"
+                  + "\r\n$4\r\n"
+                  + Integer.toString(port)
+                  + "\r\n";
+              mout.write(data.getBytes());
+              used += masterSock
+                  .getInputStream()
+                  .read(buf, used, buf.length - used);
+              mout.write(
+                  "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$3\r\neof\r\n"
+                      .getBytes());
+              used += masterSock
+                  .getInputStream()
+                  .read(buf, used, buf.length - used);
+              mout.write(
+                  "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n"
+                      .getBytes());
+              int last = -1;
+              int first = 0;
+              while (true) {
+                if (used == buf.length) {
+                  buf = java.util.Arrays.copyOf(buf, buf.length * 2);
                 }
+                int k = masterSock
+                    .getInputStream()
+                    .read(buf, used, buf.length - used);
+                if (last == -1) {
+                  for (int i = used; i < used + k; i++) {
+                    if (buf[i] < 0) {
+                      last = i + 1;
+                      first = 1;
+                    }
+                  }
+                }
+                if (last == -1) {
+                  used += k;
+                  continue;
+                }
+                if (k == -1) {
+                  break;
+                }
+                List<String> commands = new ArrayList<>();
+                StringBuilder sb = new StringBuilder();
+                for (int i = first > 0 ? last : used; i < used + k;) {
+                  if (buf[i] == 42
+                      && i + 1 < used + k
+                      && buf[i + 1] >= 48
+                      && buf[i + 1] <= 57) {
+                    i++;
+                    while (i < used + k
+                        && buf[i] >= 48
+                        && buf[i] <= 57) {
+                      i++;
+                    }
+                  } else if (buf[i] == 36
+                      && i + 1 < used + k
+                      && buf[i + 1] >= 48
+                      && buf[i + 1] <= 57) {
+                    i++;
+                    while (i < used + k
+                        && buf[i] >= 48
+                        && buf[i] <= 57) {
+                      i++;
+                    }
+                  } else if (buf[i] == 13) {
+                    i++;
+                  } else if (buf[i] == 10) {
+                    if (sb.length() > 0) {
+                      commands.add(sb.toString());
+                    }
+                    sb.setLength(0);
+                    if (i + 1 == used + k
+                        || (buf[i + 1] == 42
+                            && i + 2 < used + k
+                            && buf[i + 2] >= 48
+                            && buf[i + 2] <= 57)) {
+                      execute(
+                          commands,
+                          masterSock,
+                          true,
+                          used + k - last - 37);
+                      commands.clear();
+                    }
+                    i++;
+                  } else {
+                    sb.append((char) buf[i]);
+                    i++;
+                  }
+                }
+                first = 0;
+                used += k;
               }
+            } catch (IOException e) {
+            } catch (InterruptedException e) {
             }
-            if (last == -1) {
-              used += k;
-              continue;
-            }
-            if (k == -1) {
-              break;
-            }
-            List<String> commands = new ArrayList<>();
-            StringBuilder sb = new StringBuilder();
-            for (int i = first > 0 ? last : used; i < used + k;) {
-              if (buf[i] == 42 && i + 1 < used + k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
-                i++;
-                while (i < used + k && buf[i] >= 48 && buf[i] <= 57) {
-                  i++;
-                }
-              } else if (buf[i] == 36 && i + 1 < used + k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
-                i++;
-                while (i < used + k && buf[i] >= 48 && buf[i] <= 57) {
-                  i++;
-                }
-              } else if (buf[i] == 13) {
-                i++;
-              } else if (buf[i] == 10) {
-                if (sb.length() > 0) {
-                  commands.add(sb.toString());
-                }
-                sb.setLength(0);
-                if (i + 1 == used + k
-                    || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
-                  execute(commands, masterSock, true, used + k - last - 37);
-                  commands.clear();
-                }
-                i++;
-              } else {
-                sb.append((char) buf[i]);
-                i++;
-              }
-            }
-            first = 0;
-            used += k;
-          }
-        } catch (IOException | InterruptedException e) {
-        }
-      }).start();
+          })
+          .start();
     }
     try {
       while (true) {
