@@ -264,8 +264,15 @@ public class Main {
     client.getOutputStream().write("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"
         .getBytes(java.nio.charset.StandardCharsets.US_ASCII));
     byte[] buf = new byte[8192];
-    int n = client.getInputStream().read(buf, 0, buf.length);
-    return n > 0 ? 1 : 0;
+    int used = 0;
+    while (true) {
+      int n = client.getInputStream().read(buf, used, buf.length - used);
+      if (n == -1) {
+        break;
+      }
+      used += n;
+    }
+    return used > 0 ? 1 : 0;
   }
 
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
@@ -275,8 +282,8 @@ public class Main {
      * for (String str : commands) {
      * System.out.print(str + " ");
      * }
+     * System.out.println();
      */
-    System.out.println();
     OutputStream out = client.getOutputStream();
     if (commands.get(0).equalsIgnoreCase("wait")) {
       if (!slaves.containsKey(port)) {
@@ -301,6 +308,7 @@ public class Main {
         } finally {
         }
       }
+      pool.shutdownNow();
       out.write((":" + count + "\r\n").getBytes());
     } else if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
