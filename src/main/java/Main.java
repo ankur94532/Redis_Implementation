@@ -299,26 +299,12 @@ public class Main {
       if (!slaves.containsKey(port)) {
         out.write((":0" + "\r\n").getBytes());
       }
+      int timeout = Integer.parseInt(commands.get(2));
       int count = 0;
       Set<Socket> slave = slaves.get(port);
-      List<Socket> slaveList = new ArrayList<>();
-      slaveList.addAll(slave);
-      int timeout = Integer.parseInt(commands.get(2));
-      ExecutorService pool = Executors.newFixedThreadPool(10);
-      List<Callable<Integer>> tasks = new ArrayList<>();
-      for (int i = 0; i < slave.size(); i++) {
-        Socket skt = slaveList.get(i);
-        tasks.add(() -> work(skt, timeout));
+      for (Socket skt : slave) {
+        work(skt, timeout);
       }
-      List<Future<Integer>> futures = pool.invokeAll(tasks);
-      for (Future<Integer> f : futures) {
-        try {
-          count += f.get();
-        } catch (CancellationException | ExecutionException e) {
-        } finally {
-        }
-      }
-      pool.shutdownNow();
       System.out.println(count);
       out.write((":" + count + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
       System.out.println("done here");
