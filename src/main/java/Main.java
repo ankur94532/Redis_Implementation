@@ -303,7 +303,7 @@ public class Main {
       int count = 0;
       Set<Socket> slave = slaves.get(port);
       for (Socket skt : slave) {
-        count += work(skt, timeout);
+        count += work(skt, timeout / slave.size());
       }
       System.out.println(count);
       out.write((":" + count + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
