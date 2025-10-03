@@ -318,6 +318,9 @@ public class Main {
       slave.add(client);
       slaves.put(port, slave);
     } else if (commands.get(0).equalsIgnoreCase("REPLCONF")) {
+      if (commands.size() == 3 && commands.get(1).equals("ACK")) {
+        return;
+      }
       if (commands.size() == 3 && commands.get(1).equals("GETACK") && commands.get(2).equals("*")) {
         String str = Integer.toString(used);
         String data = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n" + "$" + str.length() + "\r\n" + str + "\r\n";
@@ -325,6 +328,7 @@ public class Main {
         out.flush();
         return;
       }
+      out.write("+OK\r\n".getBytes());
     } else if (commands.get(0).equalsIgnoreCase("info")) {
       if (master != -1) {
         out.write("$10\r\nrole:slave\r\n".getBytes());
