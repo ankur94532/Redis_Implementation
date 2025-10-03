@@ -259,17 +259,15 @@ public class Main {
     }
   }
 
-  static int work(Socket client) {
+  static int work(Socket client) throws IOException {
+    System.out.println("here");
     byte[] buf = new byte[8192];
     int used = 0;
     while (true) {
       int n = 0;
-      try {
-        n = client.getInputStream().read(buf, used, buf.length - used);
-        if (n == -1) {
-          break;
-        }
-      } catch (IOException e) {
+      n = client.getInputStream().read(buf, used, buf.length - used);
+      if (n == -1) {
+        break;
       }
       used += n;
     }
