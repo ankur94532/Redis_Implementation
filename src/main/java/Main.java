@@ -296,18 +296,36 @@ public class Main {
     System.out.println();
     OutputStream out = client.getOutputStream();
     if (commands.get(0).equalsIgnoreCase("wait")) {
-      if (!slaves.containsKey(port)) {
-        out.write((":0" + "\r\n").getBytes());
+      if (!slaves.containsKey(port) || slaves.get(port).isEmpty()) {
+        out.write(":0\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        return;
       }
+
       int timeout = Integer.parseInt(commands.get(2));
+      Set<Socket> slaveSet = slaves.get(port);
+      ExecutorService pool = Executors.newFixedThreadPool(Math.min(slaveSet.size(), 32));
       int count = 0;
-      Set<Socket> slave = slaves.get(port);
-      for (Socket skt : slave) {
-        count += work(skt, timeout);
+      try {
+        List<Callable<Integer>> tasks = new ArrayList<>();
+        for (Socket skt : slaveSet) {
+          tasks.add(() -> work(skt, timeout));
+        }
+        List<Future<Integer>> futures = pool.invokeAll(tasks, timeout, TimeUnit.MILLISECONDS);
+
+        for (Future<Integer> f : futures) {
+          try {
+            if (!f.isCancelled()) {
+              count += f.get(0, TimeUnit.MILLISECONDS);
+            }
+          } catch (Exception ignore) {
+          }
+        }
+      } finally {
+        pool.shutdownNow();
       }
-      System.out.println(count);
+
       out.write((":" + count + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
-      System.out.println("done here");
+      return;
     } else if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
       byte[] str = HexFormat.of().parseHex(
