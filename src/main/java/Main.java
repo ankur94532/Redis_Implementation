@@ -234,9 +234,6 @@ public class Main {
           out.write("+OK\r\n".getBytes(StandardCharsets.US_ASCII));
           continue;
         }
-        for (String str : commands) {
-          System.out.println(str);
-        }
         execute(commands, client, false, used);
       }
     } catch (
@@ -334,7 +331,6 @@ public class Main {
         out.write((":" + val + "\r\n").getBytes(StandardCharsets.US_ASCII));
       }
     } else if (commands.get(0).equalsIgnoreCase("get")) {
-      System.out.println("inside get");
       if (entries.containsKey(commands.get(1))) {
         Key key = entries.get(commands.get(1));
         if (Instant.now().isAfter(key.time)) {
