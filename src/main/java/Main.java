@@ -161,14 +161,14 @@ public class Main {
       byte[] buf = new byte[8192];
       int used = 0;
       boolean multi = false;
-      List<String> commands = new ArrayList<>();
-      StringBuilder sb = new StringBuilder();
       Deque<List<String>> queueCommands = new ArrayDeque<>();
       while (true) {
         int k = in.read(buf, used, buf.length - used);
         if (k == -1) {
           break;
         }
+        List<String> commands = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
         for (int i = used; i < used + k;) {
           if (buf[i] == 42 && i + 1 < used + k && buf[i + 1] >= 48 && buf[i + 1] <= 57) {
             i++;
