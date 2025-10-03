@@ -69,7 +69,7 @@ public class Main {
       master = Integer.parseInt(args[3].split(" ")[1]);
       new Thread(() -> {
         try (Socket masterSock = new Socket(args[3].split(" ")[0], master)) {
-          byte[] buf = new byte[100000];
+          byte[] buf = new byte[8192];
           int used = 0;
           OutputStream mout = masterSock.getOutputStream();
           mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
@@ -84,6 +84,9 @@ public class Main {
           int last = -1;
           int first = 0;
           while (true) {
+            if (used == buf.length) {
+              buf = java.util.Arrays.copyOf(buf, buf.length * 2);
+            }
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
             if (last == -1) {
               for (int i = used; i < used + k; i++) {
@@ -163,6 +166,9 @@ public class Main {
       boolean multi = false;
       Deque<List<String>> queueCommands = new ArrayDeque<>();
       while (true) {
+        if (used == buf.length) {
+          buf = java.util.Arrays.copyOf(buf, buf.length * 2);
+        }
         int k = in.read(buf, used, buf.length - used);
         if (k == -1) {
           break;
