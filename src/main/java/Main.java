@@ -670,6 +670,7 @@ public class Main {
     if (str.equalsIgnoreCase("set") || str.equalsIgnoreCase("incr") || str.equalsIgnoreCase("rpush")
         || str.equalsIgnoreCase("lpush") || str.equalsIgnoreCase("lpop") || str.equalsIgnoreCase("blpop")
         || str.equalsIgnoreCase("xadd")) {
+      System.out.println("directing to slaves");
       for (Socket socket : slaves.get(port)) {
         respArray(socket.getOutputStream(), commands);
       }
