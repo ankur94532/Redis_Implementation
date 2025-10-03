@@ -16,7 +16,13 @@ import java.util.Scanner;
 import java.util.Set;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 class Key {
   public String value;
@@ -72,15 +78,15 @@ public class Main {
           byte[] buf = new byte[8192];
           int used = 0;
           OutputStream mout = masterSock.getOutputStream();
-          mout.write("*1\r\n$4\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+          mout.write("*1\r\n\r\nPING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
-          String data = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port" + "\r\n$4\r\n" + Integer.toString(port)
+          String data = "*3\r\n\r\nREPLCONF\r\n\r\nlistening-port" + "\r\n\r\n" + Integer.toString(port)
               + "\r\n";
           mout.write(data.getBytes());
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
-          mout.write("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$3\r\neof\r\n".getBytes());
+          mout.write("*3\r\n\r\nREPLCONF\r\n\r\ncapa\r\n\r\neof\r\n".getBytes());
           used += masterSock.getInputStream().read(buf, used, buf.length - used);
-          mout.write("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n".getBytes());
+          mout.write("*3\r\n\r\nPSYNC\r\nExecutionException\r\n?\r\ne\r\n-1\r\n".getBytes());
           int last = -1;
           int first = 0;
           while (true) {
@@ -137,7 +143,7 @@ public class Main {
             first = 0;
             used += k;
           }
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
         }
       }).start();
     }
@@ -147,7 +153,7 @@ public class Main {
         new Thread(() -> {
           try {
             handle(clientSocket);
-          } catch (IOException e) {
+          } catch (IOException | InterruptedException e) {
             e.printStackTrace();
           }
         }).start();
@@ -157,7 +163,7 @@ public class Main {
     }
   }
 
-  static void handle(Socket client) throws IOException {
+  static void handle(Socket client) throws IOException, InterruptedException {
     try {
       InputStream in = client.getInputStream();
       OutputStream out = client.getOutputStream();
@@ -253,7 +259,28 @@ public class Main {
     }
   }
 
-  static void execute(List<String> commands, Socket client, boolean isMaster, int used) throws IOException {
+  static int work(Socket client) {
+    byte[] buf = new byte[8192];
+    int used = 0;
+    while (true) {
+      int n = 0;
+      try {
+        n = client.getInputStream().read(buf, used, buf.length - used);
+        if (n == -1) {
+          break;
+        }
+      } catch (IOException e) {
+      }
+      used += n;
+    }
+    if (used > 0) {
+      return 1;
+    }
+    return 0;
+  }
+
+  static void execute(List<String> commands, Socket client, boolean isMaster, int used)
+      throws IOException, InterruptedException {
     System.out.println("hi");
     for (String str : commands) {
       System.out.print(str + " ");
@@ -263,9 +290,27 @@ public class Main {
     if (commands.get(0).equalsIgnoreCase("wait")) {
       if (!slaves.containsKey(port)) {
         out.write((":0" + "\r\n").getBytes());
-      } else {
-        out.write((":" + slaves.get(port).size() + "\r\n").getBytes());
-      } //
+      }
+      int count = 0;
+      Set<Socket> slave = slaves.get(port);
+      List<Socket> slaveList = new ArrayList<>();
+      slaveList.addAll(slave);
+      int timeout = Integer.parseInt(commands.get(2));
+      ExecutorService pool = Executors.newFixedThreadPool(10);
+      List<Callable<Integer>> tasks = new ArrayList<>();
+      for (int i = 0; i < slave.size(); i++) {
+        Socket skt = slaveList.get(i);
+        tasks.add(() -> work(skt));
+      }
+      List<Future<Integer>> futures = pool.invokeAll(tasks, timeout, TimeUnit.MILLISECONDS);
+      for (Future<Integer> f : futures) {
+        try {
+          count += f.get();
+        } catch (ExecutionException e) {
+        } finally {
+        }
+      }
+      out.write((":" + count + "\r\n").getBytes());
     } else if (commands.get(0).equalsIgnoreCase("psync")) {
       out.write("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n".getBytes());
       byte[] str = HexFormat.of().parseHex(
