@@ -97,6 +97,7 @@ public class Main {
             if (k == -1) {
               break;
             }
+            System.out.println("got here " + k);
             List<String> commands = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             for (int i = used; i < used + k;) {
