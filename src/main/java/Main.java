@@ -101,7 +101,7 @@ public class Main {
             if (k == -1) {
               break;
             }
-            System.out.println("got here " + k);
+            System.out.println("got here " + k + " first " + first);
             List<String> commands = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             for (int i = first > 0 ? last : used; i < used + k;) {
