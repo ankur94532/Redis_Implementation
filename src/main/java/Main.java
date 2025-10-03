@@ -273,6 +273,7 @@ public class Main {
       }
       used += n;
     }
+    System.out.println(Thread.currentThread().getName() + " loop completed");
     return used > 0 ? 1 : 0;
   }
 
