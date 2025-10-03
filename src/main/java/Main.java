@@ -181,12 +181,6 @@ public class Main {
         if (k == -1) {
           break;
         }
-        int last = 0;
-        if (lastAck.containsKey(client)) {
-          last = lastAck.get(client);
-        }
-        last++;
-        lastAck.put(client, last);
         List<String> commands = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         for (int i = used; i < used + k;) {
@@ -215,6 +209,14 @@ public class Main {
             sb.append((char) buf[i]);
             i++;
           }
+        }
+        if (!commands.get(0).equalsIgnoreCase("wait")) {
+          int last = 0;
+          if (lastAck.containsKey(client)) {
+            last = lastAck.get(client);
+          }
+          last++;
+          lastAck.put(client, last);
         }
         used += k;
         if (commands.get(0).equalsIgnoreCase("discard")) {
@@ -317,7 +319,7 @@ public class Main {
         out.write(":0\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
       }
-      if (lastAck.get(client) == 1) {
+      if (lastAck.get(client) == 0) {
         System.out.println("hi");
         out.write((":" + slaves.get(port).size() + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return;
