@@ -271,6 +271,7 @@ public class Main {
       int used = 0;
       while (true) {
         int n = client.getInputStream().read(buf, used, buf.length - used);
+        System.out.println(n);
         if (n != -1) {
           break;
         }
