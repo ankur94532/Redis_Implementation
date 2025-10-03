@@ -893,6 +893,7 @@ public class Main {
   }
 
   static void respArray(OutputStream out, List<String> response) throws IOException {
+    System.out.println("hi slave");
     out.write(("*" + response.size() + "\r\n").getBytes(StandardCharsets.US_ASCII));
     for (String s : response) {
       if (s == null) {
