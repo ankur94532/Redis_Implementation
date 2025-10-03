@@ -325,7 +325,6 @@ public class Main {
         out.flush();
         return;
       }
-      out.write("+OK\r\n".getBytes());
     } else if (commands.get(0).equalsIgnoreCase("info")) {
       if (master != -1) {
         out.write("$10\r\nrole:slave\r\n".getBytes());
