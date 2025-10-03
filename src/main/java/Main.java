@@ -84,12 +84,12 @@ public class Main {
           int last = -1;
           while (true) {
             int k = masterSock.getInputStream().read(buf, used, buf.length - used);
+            System.out.println("k " + k);
             if (k > 100) {
               used += k;
               last = used;
               continue;
             }
-            System.out.println("k " + k);
             if (k == -1) {
               break;
             }
