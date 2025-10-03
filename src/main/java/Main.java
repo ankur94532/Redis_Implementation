@@ -277,7 +277,7 @@ public class Main {
     out.write(
         "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
     Thread.currentThread();
-    Thread.sleep(timeoutMs);
+    Thread.sleep(Math.max(1000, timeoutMs));
     int last2 = 0;
     if (lastAck.containsKey(client)) {
       last2 = lastAck.get(client);
@@ -303,7 +303,7 @@ public class Main {
       int count = 0;
       Set<Socket> slave = slaves.get(port);
       for (Socket skt : slave) {
-        count += work(skt, timeout / slave.size());
+        count += work(skt, timeout);
       }
       System.out.println(count);
       out.write((":" + count + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
