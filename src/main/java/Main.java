@@ -125,7 +125,7 @@ public class Main {
                 sb.setLength(0);
                 if (i + 1 == used + k
                     || (buf[i + 1] == 42 && i + 2 < used + k && buf[i + 2] >= 48 && buf[i + 2] <= 57)) {
-                  execute(commands, masterSock, true, used + k - last);
+                  execute(commands, masterSock, true, used + k - last - 37);
                   commands.clear();
                 }
                 i++;
