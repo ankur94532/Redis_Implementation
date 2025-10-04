@@ -199,7 +199,6 @@ public class Main {
           while (key.charAt(0) == '-') {
             key = key.substring(1);
           }
-          System.out.println(key + " " + value);
           configInfo.put(key, value);
         }
         dbFile = checkDirAndFile(args[1], args[3]);
@@ -214,6 +213,7 @@ public class Main {
           StringBuilder sb = new StringBuilder();
           List<String> commands = new ArrayList<>();
           for (int i = 0; i < data.length; i++) {
+            System.out.println(sb.toString() + " " + commandStart);
             if (data[i] < 0 && commands.size() > 0) {
               if (sb.length() > 0) {
                 commands.add(sb.toString());
@@ -243,7 +243,7 @@ public class Main {
           for (String str : commands) {
             System.out.println(str);
           }
-          for (int i = 3; i <= commands.size() - 3; i += 2) {
+          for (int i = 0; i < commands.size(); i += 2) {
             Key key = new Key(commands.get(i + 1), Instant.now().plusMillis(1_000_000_000L));
             entries.put(commands.get(i), key);
           }
