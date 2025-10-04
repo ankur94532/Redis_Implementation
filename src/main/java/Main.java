@@ -611,7 +611,7 @@ public class Main {
       String key = commands.get(1);
       String member = commands.get(2);
       if (!scores.containsKey(key)) {
-        out.write("0\r\n".getBytes());
+        out.write(":0\r\n".getBytes());
         return;
       }
       for (Map.Entry<Double, TreeSet<String>> entry : scores.get(key).entrySet()) {
@@ -623,7 +623,7 @@ public class Main {
           }
         }
       }
-      out.write("0\r\n".getBytes());
+      out.write(":0\r\n".getBytes());
     } else if (commands.get(0).equalsIgnoreCase("zscore")) {
       String key = commands.get(1);
       String member = commands.get(2);
