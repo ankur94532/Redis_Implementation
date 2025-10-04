@@ -591,6 +591,15 @@ public class Main {
      */
 
     OutputStream out = client.getOutputStream();
+    if (subscibed.containsKey(client)) {
+      if (!commands.get(1).equalsIgnoreCase("SUBSCRIBE") && !commands.get(1).equalsIgnoreCase("UNSUBSCRIBE")
+          && !commands.get(1).equalsIgnoreCase("PING") && !commands.get(1).equalsIgnoreCase("QUIT")
+          && !commands.get(1).equalsIgnoreCase("RESET")) {
+        String data = "ERR Can't execute" + commands.get(1) + "in subscribed mode";
+        out.write(data.getBytes());
+        return;
+      }
+    }
     if (commands.get(0).equalsIgnoreCase("subscribe")) {
       Set<String> channels = subscibed.getOrDefault(client, new HashSet<>());
       channels.add(commands.get(1));
