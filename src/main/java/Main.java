@@ -203,32 +203,34 @@ public class Main {
           configInfo.put(key, value);
         }
         dbFile = checkDirAndFile(args[1], args[3]);
-        byte[] data = Files.readAllBytes(dbFile.toPath());
-        StringBuilder sb = new StringBuilder();
-        List<String> commands = new ArrayList<>();
-        for (int i = 0; i < data.length; i++) {
-          if (data[i] >= 48 && data[i] <= 57) {
-            sb.append((char) data[i]);
-          } else if (data[i] >= 65 && data[i] <= 90) {
-            sb.append((char) data[i]);
-          } else if (data[i] >= 97 && data[i] <= 122) {
-            sb.append((char) data[i]);
-          } else if (data[i] == '.' || data[i] == '-') {
-            sb.append((char) data[i]);
-          } else {
-            if (sb.length() > 0) {
-              if (!sb.toString().equals("redis-bits")) {
-                commands.add(sb.toString());
+        if (dbFile != null) {
+          byte[] data = Files.readAllBytes(dbFile.toPath());
+          StringBuilder sb = new StringBuilder();
+          List<String> commands = new ArrayList<>();
+          for (int i = 0; i < data.length; i++) {
+            if (data[i] >= 48 && data[i] <= 57) {
+              sb.append((char) data[i]);
+            } else if (data[i] >= 65 && data[i] <= 90) {
+              sb.append((char) data[i]);
+            } else if (data[i] >= 97 && data[i] <= 122) {
+              sb.append((char) data[i]);
+            } else if (data[i] == '.' || data[i] == '-') {
+              sb.append((char) data[i]);
+            } else {
+              if (sb.length() > 0) {
+                if (!sb.toString().equals("redis-bits")) {
+                  commands.add(sb.toString());
+                }
+                sb.setLength(0);
               }
-              sb.setLength(0);
             }
           }
+          for (String str : commands) {
+            System.out.println(str);
+          }
+          Key key = new Key(commands.get(4), Instant.now().plusMillis(1_000_000_000L));
+          entries.put(commands.get(3), key);
         }
-        for (String str : commands) {
-          System.out.println(str);
-        }
-        Key key = new Key(commands.get(4), Instant.now().plusMillis(1_000_000_000L));
-        entries.put(commands.get(3), key);
       }
     }
     try {
