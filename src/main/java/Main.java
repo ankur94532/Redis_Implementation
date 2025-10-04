@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Callable;
@@ -57,7 +58,7 @@ public class Main {
   static Map<Socket, Integer> lastAck = new ConcurrentHashMap<>();
   static File dbFile;
   static Map<Socket, Set<String>> subscibed = new HashMap<>();
-  static Map<String, TreeMap<Double, List<String>>> scores = new HashMap<>();
+  static Map<String, TreeMap<Double, TreeSet<String>>> scores = new HashMap<>();
 
   static final class Waiter {
     final Socket client;
@@ -606,14 +607,40 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("zadd")) {
+    if (commands.get(0).equals("zrank")) {
+      String key = commands.get(1);
+      String memeber = commands.get(2);
+      if (!scores.containsKey(key)) {
+        out.write("$-1\r\n".getBytes());
+        return;
+      }
+      int rank = -1;
+      for (Map.Entry<Double, TreeSet<String>> it : scores.get(key).entrySet()) {
+        int c = 1;
+        for (String member : it.getValue()) {
+          if (member.equals(memeber)) {
+            rank = c;
+            break;
+          }
+          c++;
+        }
+        if (rank != -1) {
+          break;
+        }
+      }
+      if (rank == -1) {
+        out.write("$-1\r\n".getBytes());
+      } else {
+        out.write(("$" + rank + "\r\n").getBytes());
+      }
+    } else if (commands.get(0).equalsIgnoreCase("zadd")) {
       String key = commands.get(1);
       Double score = Double.parseDouble(commands.get(2));
       String member = commands.get(3);
       scores.putIfAbsent(key, new TreeMap<>());
-      scores.get(key).putIfAbsent(score, new ArrayList<>());
+      scores.get(key).putIfAbsent(score, new TreeSet<>());
       int present = 1;
-      for (Map.Entry<Double, List<String>> it : scores.get(key).entrySet()) {
+      for (Map.Entry<Double, TreeSet<String>> it : scores.get(key).entrySet()) {
         if (it.getValue().contains(member)) {
           present = 0;
         }
