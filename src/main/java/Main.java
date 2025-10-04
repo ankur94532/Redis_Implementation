@@ -625,6 +625,7 @@ public class Main {
         out.write("*0\r\n".getBytes());
         return;
       }
+      System.out.println(members.size());
       end = Math.min(end, members.size() - 1);
       List<String> response = new ArrayList<>();
       for (int i = start; i <= end; i++) {
