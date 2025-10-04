@@ -611,6 +611,7 @@ public class Main {
       Double score = Double.parseDouble(commands.get(2));
       String member = commands.get(3);
       scores.putIfAbsent(key, new TreeMap<>());
+      scores.get(key).putIfAbsent(score, new ArrayList<>());
       scores.get(key).get(score).add(member);
       out.write(":1\r\n".getBytes());
     } else if (commands.get(0).equalsIgnoreCase("unsubscribe")) {
