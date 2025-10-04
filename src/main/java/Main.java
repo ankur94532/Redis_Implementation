@@ -71,10 +71,8 @@ public class Main {
     for (String str : hex) {
       sb.append(str);
     }
-    System.out.println(sb.toString());
     byte[] key = HexFormat.of().parseHex(sb.toString());
     String s = new String(key, StandardCharsets.UTF_8);
-    System.out.println(s);
     return s;
   }
 
@@ -225,7 +223,7 @@ public class Main {
             input.add(sb.toString());
             sb.setLength(0);
           }
-          System.out.println(hexConverter(List.of("09")));
+          System.out.println(hexConverter(List.of("67", "72", "61", "70", "65")));
         }
       }
     }
