@@ -607,7 +607,9 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("zrem")) {
+    if (commands.get(0).equalsIgnoreCase("geoadd")) {
+      out.write(":1\r\n".getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("zrem")) {
       String key = commands.get(1);
       String member = commands.get(2);
       if (!scores.containsKey(key)) {
