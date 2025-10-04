@@ -55,6 +55,7 @@ public class Main {
   static int master = -1;
   static Map<Socket, Integer> lastAck = new ConcurrentHashMap<>();
   static File dbFile;
+  static Map<Socket, Set<String>> subscibed = new HashMap<>();
 
   static final class Waiter {
     final Socket client;
@@ -259,9 +260,6 @@ public class Main {
             input.add(sb.toString());
             sb.setLength(0);
           }
-          for (int i = 0; i < input.size(); i++) {
-            System.out.println(input.get(i));
-          }
           for (int i = 0; i < input.size();) {
             if (input.get(i).equals("ff")) {
               break;
@@ -282,7 +280,6 @@ public class Main {
               }
               i += 9;
               Instant expiry = hexLeToInstant(time);
-              System.out.println(expiry);
               int len = 0;
               if (input.get(i).charAt(0) == '0') {
                 len = decodeRdbLenHex(input.get(i));
@@ -344,7 +341,6 @@ public class Main {
               String value = hexConverter(time);
               Key entry = new Key(value, expiry);
               entries.put(key, entry);
-              System.out.println(key + " " + value + " " + expiry);
               continue;
             }
             if (input.get(i).equals("00")) {
@@ -410,7 +406,6 @@ public class Main {
               String value = hexConverter(time);
               Key entry = new Key(value, Instant.now().plusMillis(1_000_000_00000L));
               entries.put(key, entry);
-              System.out.println("hi " + key + " " + value);
               continue;
             }
             i++;
@@ -596,7 +591,12 @@ public class Main {
      */
 
     OutputStream out = client.getOutputStream();
-    if (commands.get(0).equalsIgnoreCase("keys")) {
+    if (commands.get(0).equalsIgnoreCase("subscribe")) {
+      Set<String> channels = subscibed.getOrDefault(client, new HashSet<>());
+      channels.add(commands.get(1));
+      String response = "*3\r\n$9\r\nsubscribe\r\n" + "$" + commands.get(1).length() + "\r\nfoo\r\n:1\r\n";
+      out.write(response.getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("keys")) {
       String data = "*" + entries.size() + "\r\n";
       for (String str : entries.keySet()) {
         data += "$" + str.length() + "\r\n";
