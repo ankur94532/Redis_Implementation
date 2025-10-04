@@ -607,7 +607,7 @@ public class Main {
     if (commands.get(0).equalsIgnoreCase("publish")) {
       String channel = commands.get(1);
       String message = commands.get(2);
-      String data = "*3\r\n$7\r\nmessage\r\n" + "$" + channel.length() + "\r\n" + channel + "\r\n" + message.length()
+      String data = "*3\r\n$7\r\nmessage\r\n" + "$" + channel.length() + "\r\n" + channel + "\r\n$" + message.length()
           + "\r\n" + message + "\r\n";
       int count = 0;
       for (Map.Entry<Socket, Set<String>> entry : subscibed.entrySet()) {
