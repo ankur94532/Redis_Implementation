@@ -194,6 +194,11 @@ public class Main {
             .start();
       } else {
         dbFile = checkDirAndFile(args[1], args[3]);
+        try (java.io.BufferedReader br = Files.newBufferedReader(dbFile.toPath(), StandardCharsets.UTF_8)) {
+          for (String line; (line = br.readLine()) != null;) {
+            System.out.println(line);
+          }
+        }
       }
     }
     try {
@@ -221,7 +226,6 @@ public class Main {
     if (!Files.isRegularFile(file)) {
       return null;
     }
-    System.out.println("file exists");
     return file.toFile();
   }
 
