@@ -206,13 +206,18 @@ public class Main {
         boolean commandStart = false;
         if (dbFile != null) {
           byte[] data = Files.readAllBytes(dbFile.toPath());
-          for (int i = 0; i < data.length; i++) {
-            System.out.println(data[i]);
-          }
+          /*
+           * for (int i = 0; i < data.length; i++) {
+           * System.out.println(data[i]);
+           * }
+           */
           StringBuilder sb = new StringBuilder();
           List<String> commands = new ArrayList<>();
           for (int i = 0; i < data.length; i++) {
             if (data[i] < 0 && commands.size() > 0) {
+              if (sb.length() > 0) {
+                commands.add(sb.toString());
+              }
               break;
             }
             if (data[i] >= 48 && data[i] <= 57) {
