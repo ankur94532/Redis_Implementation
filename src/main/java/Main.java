@@ -193,6 +193,15 @@ public class Main {
             })
             .start();
       } else {
+        for (int i = 0; i < 4; i += 2) {
+          String key = args[i];
+          String value = args[i + 1];
+          while (key.charAt(0) == '-') {
+            key = key.substring(1);
+          }
+          System.out.println(key + " " + value);
+          configInfo.put(key, value);
+        }
         dbFile = checkDirAndFile(args[1], args[3]);
         byte[] data = Files.readAllBytes(dbFile.toPath());
         StringBuilder sb = new StringBuilder();
@@ -208,7 +217,9 @@ public class Main {
             sb.append((char) data[i]);
           } else {
             if (sb.length() > 0) {
-              commands.add(sb.toString());
+              if (!sb.toString().equals("redis-bits")) {
+                commands.add(sb.toString());
+              }
               sb.setLength(0);
             }
           }
@@ -216,6 +227,8 @@ public class Main {
         for (String str : commands) {
           System.out.println(str);
         }
+        Key key = new Key(commands.getLast(), Instant.now().plusMillis(1_000_000_000L));
+        entries.put(commands.get(commands.size() - 2), key);
       }
     }
     try {
@@ -396,7 +409,14 @@ public class Main {
      */
 
     OutputStream out = client.getOutputStream();
-    if (commands.get(0).equalsIgnoreCase("config")) {
+    if (commands.get(0).equalsIgnoreCase("keys")) {
+      String data = "*" + entries.size() + "\r\n";
+      for (String str : entries.keySet()) {
+        data += "$" + str.length() + "\r\n";
+        data += str + "\r\n";
+      }
+      out.write(data.getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("config")) {
       String key = commands.get(2);
       String value = configInfo.get(key);
       String data = "*2\r\n" + "$" + key.length() + "\r\n" + key + "\r\n" + "$" + value.length() + "\r\n" + value
