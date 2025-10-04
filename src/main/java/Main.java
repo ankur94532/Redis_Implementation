@@ -335,7 +335,8 @@ public class Main {
               entries.put(key, entry);
               System.out.println(key + " " + value + " " + expiry);
               continue;
-            } else if (input.get(i).equals("00")) {
+            }
+            if (input.get(i).equals("00")) {
               i++;
               List<String> time = new ArrayList<>();
               int len = 0;
@@ -400,6 +401,7 @@ public class Main {
               Key entry = new Key(value, Instant.now().plusMillis(1_000_000_00000L));
               entries.put(key, entry);
               System.out.println(key + " " + value);
+              continue;
             }
             i++;
           }
