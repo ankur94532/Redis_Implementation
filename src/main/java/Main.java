@@ -608,8 +608,8 @@ public class Main {
     }
     if (commands.get(0).equalsIgnoreCase("zadd")) {
       String key = commands.get(1);
-      Double score = Double.parseDouble(commands.get(1));
-      String member = commands.get(2);
+      Double score = Double.parseDouble(commands.get(2));
+      String member = commands.get(3);
       scores.computeIfAbsent(key, k -> new TreeMap<>());
       scores.get(key).get(score).add(member);
       out.write(":1\r\n".getBytes());
