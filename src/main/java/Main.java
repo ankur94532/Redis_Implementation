@@ -66,6 +66,16 @@ public class Main {
     }
   }
 
+  static String hexConverter(List<String> hex) {
+    StringBuilder sb = new StringBuilder();
+    for (String str : hex) {
+      sb.append(str);
+    }
+    byte[] key = HexFormat.of().parseHex(sb.toString());
+    String s = new String(key, StandardCharsets.UTF_8);
+    return s;
+  }
+
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
     if (args.length > 0 && args[0].equals("--port")) {
@@ -211,10 +221,10 @@ public class Main {
             sb.append(allHex.charAt(i));
             sb.append(allHex.charAt(i + 1));
             input.add(sb.toString());
-            System.out.println(sb.toString());
             sb.setLength(0);
           }
-        } //
+          System.out.println(hexConverter(List.of("09")));
+        }
       }
     }
     try {
