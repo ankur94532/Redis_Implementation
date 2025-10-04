@@ -205,7 +205,15 @@ public class Main {
         if (dbFile != null) {
           byte[] data = Files.readAllBytes(dbFile.toPath());
           String allHex = HexFormat.of().formatHex(data); // continuous hex
-          System.out.println(allHex);
+          List<String> input = new ArrayList<>();
+          StringBuilder sb = new StringBuilder();
+          for (int i = 0; i < allHex.length(); i += 2) {
+            sb.append(allHex.charAt(i));
+            sb.append(allHex.charAt(i + 1));
+            input.add(sb.toString());
+            System.out.println(sb.toString());
+            sb.setLength(0);
+          }
         } //
       }
     }
