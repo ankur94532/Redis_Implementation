@@ -354,14 +354,13 @@ public class Main {
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
       throws IOException, InterruptedException {
 
-    /*
-     * System.out.println("hi");
-     * for (String str : commands) {
-     * System.out.print(str + " ");
-     * }
-     * 
-     * System.out.println();
-     */
+    System.out.println("hi");
+    for (String str : commands) {
+      System.out.print(str + " ");
+    }
+
+    System.out.println();
+
     OutputStream out = client.getOutputStream();
     if (commands.get(0).equalsIgnoreCase("config")) {
       String key = commands.get(2);
