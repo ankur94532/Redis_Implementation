@@ -207,7 +207,7 @@ public class Main {
           byte[] data = Files.readAllBytes(dbFile.toPath());
 
           for (int i = 0; i < data.length; i++) {
-            System.out.println((char) data[i]);
+            System.out.println(data[i]);
           }
 
           StringBuilder sb = new StringBuilder();
