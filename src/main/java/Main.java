@@ -71,6 +71,7 @@ public class Main {
     for (String str : hex) {
       sb.append(str);
     }
+    System.out.println(sb.toString());
     byte[] key = HexFormat.of().parseHex(sb.toString());
     String s = new String(key, StandardCharsets.UTF_8);
     return s;
