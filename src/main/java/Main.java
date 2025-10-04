@@ -615,8 +615,8 @@ public class Main {
         return;
       }
       int rank = -1;
+      int c = 0;
       for (Map.Entry<Double, TreeSet<String>> it : scores.get(key).entrySet()) {
-        int c = 0;
         for (String member : it.getValue()) {
           if (member.equals(memeber)) {
             rank = c;
