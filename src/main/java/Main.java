@@ -335,6 +335,71 @@ public class Main {
               entries.put(key, entry);
               System.out.println(key + " " + value + " " + expiry);
               continue;
+            } else if (input.get(i).equals("00")) {
+              i++;
+              List<String> time = new ArrayList<>();
+              int len = 0;
+              if (input.get(i).charAt(0) == '0') {
+                len = decodeRdbLenHex(input.get(i));
+                i++;
+              } else if (input.get(i).charAt(0) == '4') {
+                StringBuilder sbLen = new StringBuilder();
+                sbLen.append(input.get(i));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 1));
+                len = decodeRdbLenHex(sb.toString());
+                i += 2;
+              } else {
+                StringBuilder sbLen = new StringBuilder();
+                sbLen.append(input.get(i));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 1));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 2));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 3));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 3));
+                i += 5;
+              }
+              time.clear();
+              for (int j = i; j < i + len; j++) {
+                time.add(input.get(j));
+              }
+              String key = hexConverter(time);
+              i += len;
+              if (input.get(i).charAt(0) == '0') {
+                len = decodeRdbLenHex(input.get(i));
+                i++;
+              } else if (input.get(i).charAt(0) == '4') {
+                StringBuilder sbLen = new StringBuilder();
+                sbLen.append(input.get(i));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 1));
+                len = decodeRdbLenHex(sb.toString());
+                i += 2;
+              } else {
+                StringBuilder sbLen = new StringBuilder();
+                sbLen.append(input.get(i));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 1));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 2));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 3));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 3));
+                i += 5;
+              }
+              time.clear();
+              for (int j = i; j < i + len; j++) {
+                time.add(input.get(j));
+              }
+              i += len;
+              String value = hexConverter(time);
+              Key entry = new Key(value, Instant.now().plusMillis(1_000_000_00000L));
+              entries.put(key, entry);
+              System.out.println(key + " " + value);
             }
             i++;
           }
