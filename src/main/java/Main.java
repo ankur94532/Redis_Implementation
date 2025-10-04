@@ -338,7 +338,6 @@ public class Main {
             }
             if (input.get(i).equals("00")) {
               i++;
-              List<String> time = new ArrayList<>();
               int len = 0;
               if (input.get(i).charAt(0) == '0') {
                 len = decodeRdbLenHex(input.get(i));
@@ -363,7 +362,7 @@ public class Main {
                 sbLen.append(input.get(i + 3));
                 i += 5;
               }
-              time.clear();
+              List<String> time = new ArrayList<>();
               for (int j = i; j < i + len; j++) {
                 time.add(input.get(j));
               }
@@ -400,7 +399,7 @@ public class Main {
               String value = hexConverter(time);
               Key entry = new Key(value, Instant.now().plusMillis(1_000_000_00000L));
               entries.put(key, entry);
-              System.out.println(key + " " + value);
+              System.out.println("hi " + key + " " + value);
               continue;
             }
             i++;
