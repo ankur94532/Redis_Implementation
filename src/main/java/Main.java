@@ -608,10 +608,9 @@ public class Main {
       if (subscibed.get(client).contains(commands.get(1))) {
         subscibed.get(client).remove(commands.get(1));
       }
+      int len = subscibed.getOrDefault(client, new HashSet<>()).size();
       String data = "*3\r\n" + "$11\r\n" + "unsubscribe\r\n" + "$" + commands.get(1).length() + "\r\n"
-          + commands.get(1) + "\r\n" + "$"
-          + subscibed.getOrDefault(client, new HashSet<>()).size() + "\r\n"
-          + subscibed.getOrDefault(client, new HashSet<>())
+          + commands.get(1) + "\r\n" + ":" + len
           + "\r\n";
       out.write(data.getBytes());
     } else if (commands.get(0).equalsIgnoreCase("publish")) {
