@@ -612,7 +612,11 @@ public class Main {
         out.write(":0\r\n".getBytes());
         return;
       }
-      out.write((":" + scores.get(commands.get(1)).size() + "\r\n").getBytes());
+      int c = 0;
+      for (Map.Entry<Double, TreeSet<String>> it : scores.get(commands.get(1)).entrySet()) {
+        c += it.getValue().size();
+      }
+      out.write((":" + c + "\r\n").getBytes());
     } else if (commands.get(0).equalsIgnoreCase("zrange")) {
       String key = commands.get(1);
       int start = Integer.parseInt(commands.get(2));
