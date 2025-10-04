@@ -244,8 +244,7 @@ public class Main {
               i += 9;
               Instant expiry = hexLeToInstant(time);
               System.out.println(expiry);
-              int len = input.get(i).charAt(1);
-              System.out.println(input.get(i) + " " + len);
+              int len = input.get(i).charAt(1) - 48;
               i++;
               time.clear();
               for (int j = i; j < i + len; j++) {
@@ -253,7 +252,7 @@ public class Main {
               }
               String key = hexConverter(time);
               i += len;
-              len = input.get(i).charAt(1);
+              len = input.get(i).charAt(1) - 48;
               i++;
               time.clear();
               for (int j = i; j < i + len; j++) {
