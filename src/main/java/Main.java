@@ -194,6 +194,7 @@ public class Main {
           while (key.charAt(0) == '-') {
             key = key.substring(1);
           }
+          System.out.println(key + " " + value);
           configInfo.put(key, value);
         }
       }
