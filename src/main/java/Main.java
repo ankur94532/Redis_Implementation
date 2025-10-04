@@ -621,6 +621,16 @@ public class Main {
           members.add(member);
         }
       }
+      if (members.size() == 0) {
+        out.write("*0\r\n".getBytes());
+        return;
+      }
+      if (start < 0) {
+        start = (start + members.size()) % members.size();
+      }
+      if (end < 0) {
+        end = (end + members.size()) % members.size();
+      }
       if (start >= members.size() || start > end) {
         out.write("*0\r\n".getBytes());
         return;
