@@ -266,6 +266,14 @@ public class Main {
             if (input.get(i).equals("ff")) {
               break;
             }
+            if (input.get(i).equals("fe")) {
+              i += 2;
+              continue;
+            }
+            if (input.get(i).equals("fb")) {
+              i += 3;
+              continue;
+            }
             if (input.get(i).equals("fc")) {
               List<String> time = new ArrayList<>();
               i++;
