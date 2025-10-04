@@ -607,7 +607,23 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("zscore")) {
+    if (commands.get(0).equalsIgnoreCase("zrem")) {
+      String key = commands.get(1);
+      String member = commands.get(2);
+      if (!scores.containsKey(key)) {
+        out.write("0\r\n".getBytes());
+        return;
+      }
+      for (Map.Entry<Double, TreeSet<String>> entry : scores.get(key).entrySet()) {
+        for (String str : entry.getValue()) {
+          if (str.equals(member)) {
+            out.write((":1\r\n").getBytes());
+            return;
+          }
+        }
+      }
+      out.write("0\r\n".getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("zscore")) {
       String key = commands.get(1);
       String member = commands.get(2);
       if (!scores.containsKey(key)) {
