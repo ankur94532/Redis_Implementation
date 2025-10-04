@@ -227,8 +227,8 @@ public class Main {
         for (String str : commands) {
           System.out.println(str);
         }
-        Key key = new Key(commands.getLast(), Instant.now().plusMillis(1_000_000_000L));
-        entries.put(commands.get(commands.size() - 2), key);
+        Key key = new Key(commands.get(4), Instant.now().plusMillis(1_000_000_000L));
+        entries.put(commands.get(3), key);
       }
     }
     try {
