@@ -202,50 +202,10 @@ public class Main {
           configInfo.put(key, value);
         }
         dbFile = checkDirAndFile(args[1], args[3]);
-        boolean commandStart = false;
         if (dbFile != null) {
           byte[] data = Files.readAllBytes(dbFile.toPath());
-
-          for (int i = 0; i < data.length; i++) {
-            System.out.println(data[i]);
-          }
-
-          StringBuilder sb = new StringBuilder();
-          List<String> commands = new ArrayList<>();
-          for (int i = 0; i < data.length; i++) {
-            if (data[i] < 0 && commands.size() > 0) {
-              if (sb.length() > 0) {
-                commands.add(sb.toString());
-              }
-              break;
-            }
-            if (data[i] >= 48 && data[i] <= 57) {
-              sb.append((char) data[i]);
-            } else if (data[i] >= 65 && data[i] <= 90) {
-              sb.append((char) data[i]);
-            } else if (data[i] >= 97 && data[i] <= 122) {
-              sb.append((char) data[i]);
-            } else if (data[i] == '.' || data[i] == '-') {
-              sb.append((char) data[i]);
-            } else {
-              if (sb.length() > 0) {
-                if (commandStart == true) {
-                  commands.add(sb.toString());
-                }
-                if (sb.toString().equals("redis-bits")) {
-                  commandStart = true;
-                }
-                sb.setLength(0);
-              }
-            }
-          }
-          for (String str : commands) {
-            System.out.println(str);
-          }
-          for (int i = 0; i < commands.size(); i += 2) {
-            Key key = new Key(commands.get(i + 1), Instant.now().plusMillis(1_000_000_000L));
-            entries.put(commands.get(i), key);
-          }
+          String allHex = HexFormat.of().formatHex(data); // continuous hex
+          System.out.println(allHex);
         } //
       }
     }
