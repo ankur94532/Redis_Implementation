@@ -205,6 +205,9 @@ public class Main {
         dbFile = checkDirAndFile(args[1], args[3]);
         if (dbFile != null) {
           byte[] data = Files.readAllBytes(dbFile.toPath());
+          for (int i = 0; i < data.length; i++) {
+            System.out.println(data[i]);
+          }
           StringBuilder sb = new StringBuilder();
           List<String> commands = new ArrayList<>();
           for (int i = 0; i < data.length; i++) {
