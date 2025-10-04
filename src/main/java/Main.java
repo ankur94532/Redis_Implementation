@@ -247,6 +247,8 @@ public class Main {
           configInfo.put(key, value);
         }
         dbFile = checkDirAndFile(args[1], args[3]);
+        System.out.println(decodeRdbLenHex("0a"));
+        System.out.println(decodeRdbLenHex("40 40"));
         if (dbFile != null) {
           byte[] data = Files.readAllBytes(dbFile.toPath());
           String allHex = HexFormat.of().formatHex(data); // continuous hex
