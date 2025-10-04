@@ -610,7 +610,7 @@ public class Main {
     if (commands.get(0).equalsIgnoreCase("zrange")) {
       String key = commands.get(1);
       int start = Integer.parseInt(commands.get(2));
-      int end = Integer.parseInt(commands.get(2));
+      int end = Integer.parseInt(commands.get(3));
       List<String> members = new ArrayList<>();
       if (!scores.containsKey(key)) {
         out.write("*0\r\n".getBytes());
@@ -625,7 +625,6 @@ public class Main {
         out.write("*0\r\n".getBytes());
         return;
       }
-      System.out.println(members.size());
       end = Math.min(end, members.size() - 1);
       List<String> response = new ArrayList<>();
       for (int i = start; i <= end; i++) {
