@@ -604,7 +604,17 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("publish")) {
+    if (commands.get(0).equalsIgnoreCase("message")) {
+      String channel = commands.get(1);
+      String message = commands.get(2);
+      String data = "*3\r\n$7\r\nmessage\r\n" + "$" + channel.length() + "\r\n" + channel + "\r\n" + message.length()
+          + "\r\n" + message + "\r\n";
+      for (Map.Entry<Socket, Set<String>> entry : subscibed.entrySet()) {
+        if (entry.getValue().contains(channel)) {
+          entry.getKey().getOutputStream().write(data.getBytes());
+        }
+      }
+    } else if (commands.get(0).equalsIgnoreCase("publish")) {
       String channel = commands.get(1);
       int count = 0;
       for (Map.Entry<Socket, Set<String>> entry : subscibed.entrySet()) {
