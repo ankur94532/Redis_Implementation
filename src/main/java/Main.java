@@ -617,6 +617,7 @@ public class Main {
       for (Map.Entry<Double, TreeSet<String>> entry : scores.get(key).entrySet()) {
         for (String str : entry.getValue()) {
           if (str.equals(member)) {
+            scores.get(key).get(entry.getKey()).remove(str);
             out.write((":1\r\n").getBytes());
             return;
           }
