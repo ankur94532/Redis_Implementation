@@ -75,10 +75,13 @@ public class Main {
     return s;
   }
 
-  static long hexLeToLong(List<String> hex) {
+  static Instant hexLeToInstant(List<String> hex) {
     String joined = String.join("", hex);
-    byte[] b = HexFormat.of().parseHex(joined);
-    return ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).getLong();
+    byte[] b = HexFormat.of().parseHex(joined); // must be 8 bytes
+    if (b.length != 8)
+      throw new IllegalArgumentException("Expected 8 bytes");
+    long ms = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).getLong();
+    return Instant.ofEpochMilli(ms);
   }
 
   public static void main(String[] args) throws IOException {
@@ -228,7 +231,42 @@ public class Main {
             input.add(sb.toString());
             sb.setLength(0);
           }
-          System.out.println(hexLeToLong(List.of("09")));
+          for (int i = 0; i < input.size();) {
+            if (input.get(i).equals("ff")) {
+              i++;
+              break;
+            }
+            if (input.get(i).equals("fc")) {
+              List<String> time = new ArrayList<>();
+              i++;
+              for (int j = i; j < i + 8; j++) {
+                time.add(input.get(j));
+              }
+              i += 9;
+              Instant expiry = hexLeToInstant(time);
+              int len = input.get(i).charAt(1);
+              i++;
+              time.clear();
+              for (int j = i; j < i + len; j++) {
+                time.add(input.get(j));
+              }
+              String key = hexConverter(time);
+              i += len;
+              len = input.get(i).charAt(1);
+              i++;
+              time.clear();
+              for (int j = i; j < i + len; j++) {
+                time.add(input.get(j));
+              }
+              i += len;
+              String value = hexConverter(time);
+              Key entry = new Key(value, expiry);
+              entries.put(key, entry);
+              System.out.println(key + " " + value);
+              continue;
+            }
+            i++;
+          }
         }
       }
     }
