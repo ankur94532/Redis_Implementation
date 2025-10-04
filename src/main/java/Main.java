@@ -259,6 +259,9 @@ public class Main {
             input.add(sb.toString());
             sb.setLength(0);
           }
+          for (int i = 0; i < input.size(); i++) {
+            System.out.println(input.get(i));
+          }
           for (int i = 0; i < input.size();) {
             if (input.get(i).equals("ff")) {
               break;
