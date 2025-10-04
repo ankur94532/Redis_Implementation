@@ -194,7 +194,6 @@ public class Main {
           while (key.charAt(0) == '-') {
             key = key.substring(1);
           }
-          System.out.println(key + " " + value);
           configInfo.put(key, value);
         }
       }
@@ -355,12 +354,14 @@ public class Main {
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
       throws IOException, InterruptedException {
 
-    System.out.println("hi");
-    for (String str : commands) {
-      System.out.print(str + " ");
-    }
-
-    System.out.println();
+    /*
+     * System.out.println("hi");
+     * for (String str : commands) {
+     * System.out.print(str + " ");
+     * }
+     * 
+     * System.out.println();
+     */
 
     OutputStream out = client.getOutputStream();
     if (commands.get(0).equalsIgnoreCase("config")) {
