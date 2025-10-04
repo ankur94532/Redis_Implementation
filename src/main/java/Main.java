@@ -608,7 +608,13 @@ public class Main {
       }
     }
     if (commands.get(0).equalsIgnoreCase("geoadd")) {
-      out.write(":1\r\n".getBytes());
+      double longitude = Double.parseDouble(commands.get(1));
+      double latitude = Double.parseDouble(commands.get(2));
+      if (longitude < -180 || longitude > 180 || latitude < -180 || latitude > 180) {
+        out.write(("-ERR invalid longitude,latitude pair " + longitude + "," + latitude + "\r\n").getBytes());
+      } else {
+        out.write(":1\r\n".getBytes());
+      }
     } else if (commands.get(0).equalsIgnoreCase("zrem")) {
       String key = commands.get(1);
       String member = commands.get(2);
