@@ -1,9 +1,13 @@
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -48,6 +52,7 @@ public class Main {
   static int port = 6379;
   static int master = -1;
   static Map<Socket, Integer> lastAck = new ConcurrentHashMap<>();
+  static File dbFile;
 
   static final class Waiter {
     final Socket client;
@@ -188,14 +193,7 @@ public class Main {
             })
             .start();
       } else {
-        for (int i = 0; i < 4; i += 2) {
-          String key = args[i];
-          String value = args[i + 1];
-          while (key.charAt(0) == '-') {
-            key = key.substring(1);
-          }
-          configInfo.put(key, value);
-        }
+        dbFile = checkDirAndFile(args[1], args[3]);
       }
     }
     try {
@@ -212,6 +210,19 @@ public class Main {
     } finally {
       serverSocket.close();
     }
+  }
+
+  static File checkDirAndFile(String dirPath, String fileName) {
+    Path dir = Paths.get(dirPath).toAbsolutePath().normalize();
+    if (!Files.isDirectory(dir)) {
+      return null;
+    }
+    Path file = dir.resolve(fileName).normalize();
+    if (!Files.isRegularFile(file)) {
+      return null;
+    }
+    System.out.println("file exists");
+    return file.toFile();
   }
 
   static void handle(Socket client) throws IOException, InterruptedException {
