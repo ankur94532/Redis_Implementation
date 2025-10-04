@@ -196,7 +196,7 @@ public class Main {
         dbFile = checkDirAndFile(args[1], args[3]);
         byte[] data = Files.readAllBytes(dbFile.toPath());
         for (int i = 0; i < data.length; i++) {
-          System.out.println(data[i]);
+          System.out.println((char) data[i]);
         }
       }
     }
