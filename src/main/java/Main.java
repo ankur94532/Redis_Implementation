@@ -625,10 +625,10 @@ public class Main {
         out.write("*0\r\n".getBytes());
         return;
       }
-      if (start < 0) {
+      while (start < 0) {
         start = (start + members.size()) % members.size();
       }
-      if (end < 0) {
+      while (end < 0) {
         end = (end + members.size()) % members.size();
       }
       if (start >= members.size() || start > end) {
