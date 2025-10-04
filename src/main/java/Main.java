@@ -612,8 +612,14 @@ public class Main {
       String member = commands.get(3);
       scores.putIfAbsent(key, new TreeMap<>());
       scores.get(key).putIfAbsent(score, new ArrayList<>());
+      int present = 0;
+      for (Map.Entry<Double, List<String>> it : scores.get(key).entrySet()) {
+        if (it.getValue().contains(member)) {
+          present = 1;
+        }
+      }
       scores.get(key).get(score).add(member);
-      out.write(":1\r\n".getBytes());
+      out.write((":" + present + "\r\n").getBytes());
     } else if (commands.get(0).equalsIgnoreCase("unsubscribe")) {
       if (subscibed.get(client).contains(commands.get(1))) {
         subscibed.get(client).remove(commands.get(1));
