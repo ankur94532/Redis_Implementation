@@ -233,7 +233,6 @@ public class Main {
           }
           for (int i = 0; i < input.size();) {
             if (input.get(i).equals("ff")) {
-              i++;
               break;
             }
             if (input.get(i).equals("fc")) {
@@ -244,6 +243,7 @@ public class Main {
               }
               i += 9;
               Instant expiry = hexLeToInstant(time);
+              System.out.println(expiry);
               int len = input.get(i).charAt(1);
               i++;
               time.clear();
