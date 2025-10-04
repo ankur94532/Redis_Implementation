@@ -625,6 +625,7 @@ public class Main {
         out.write("*0\r\n".getBytes());
         return;
       }
+      System.out.println(members.size());
       while (start < 0) {
         start = (start + members.size()) % members.size();
       }
