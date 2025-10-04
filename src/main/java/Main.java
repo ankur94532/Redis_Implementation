@@ -63,7 +63,7 @@ public class Main {
 
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
-    if (args.length > 0) {
+    if (args.length > 0 && args[0].equals("--port")) {
       port = Integer.parseInt(args[1]);
     }
     ServerSocket serverSocket;
