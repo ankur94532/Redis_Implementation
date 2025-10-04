@@ -594,7 +594,8 @@ public class Main {
     if (commands.get(0).equalsIgnoreCase("subscribe")) {
       Set<String> channels = subscibed.getOrDefault(client, new HashSet<>());
       channels.add(commands.get(1));
-      String response = "*3\r\n$9\r\nsubscribe\r\n" + "$" + commands.get(1).length() + "\r\nfoo\r\n:1\r\n";
+      String response = "*3\r\n$9\r\nsubscribe\r\n" + "$" + commands.get(1).length() + "\r\n" + commands.get(1)
+          + "\r\n:1\r\n";
       out.write(response.getBytes());
     } else if (commands.get(0).equalsIgnoreCase("keys")) {
       String data = "*" + entries.size() + "\r\n";
