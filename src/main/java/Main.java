@@ -195,8 +195,26 @@ public class Main {
       } else {
         dbFile = checkDirAndFile(args[1], args[3]);
         byte[] data = Files.readAllBytes(dbFile.toPath());
+        StringBuilder sb = new StringBuilder();
+        List<String> commands = new ArrayList<>();
         for (int i = 0; i < data.length; i++) {
-          System.out.println((char) data[i]);
+          if (data[i] >= 48 && data[i] <= 57) {
+            sb.append((char) data[i]);
+          } else if (data[i] >= 65 && data[i] <= 90) {
+            sb.append((char) data[i]);
+          } else if (data[i] >= 97 && data[i] <= 122) {
+            sb.append((char) data[i]);
+          } else if (data[i] == '.' || data[i] == '-') {
+            sb.append((char) data[i]);
+          } else {
+            if (sb.length() > 0) {
+              commands.add(sb.toString());
+              sb.setLength(0);
+            }
+          }
+        }
+        for (String str : commands) {
+          System.out.println(str);
         }
       }
     }
