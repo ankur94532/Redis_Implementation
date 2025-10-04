@@ -233,7 +233,7 @@ public class Main {
                 if (commandStart) {
                   commands.add(sb.toString());
                 }
-                if (!sb.toString().equals("redis-bits")) {
+                if (sb.toString().equals("redis-bits")) {
                   commandStart = true;
                 }
                 sb.setLength(0);
