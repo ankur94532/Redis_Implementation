@@ -631,7 +631,7 @@ public class Main {
       if (rank == -1) {
         out.write("$-1\r\n".getBytes());
       } else {
-        out.write(("$:" + rank + "\r\n").getBytes());
+        out.write((":" + rank + "\r\n").getBytes());
       }
     } else if (commands.get(0).equalsIgnoreCase("zadd")) {
       String key = commands.get(1);
