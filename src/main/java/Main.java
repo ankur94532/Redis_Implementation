@@ -612,7 +612,7 @@ public class Main {
         out.write(":0\r\n".getBytes());
         return;
       }
-      out.write((":" + scores.get(commands.get(1)) + "\r\n").getBytes());
+      out.write((":" + scores.get(commands.get(1)).size() + "\r\n").getBytes());
     } else if (commands.get(0).equalsIgnoreCase("zrange")) {
       String key = commands.get(1);
       int start = Integer.parseInt(commands.get(2));
