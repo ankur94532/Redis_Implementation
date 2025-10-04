@@ -607,7 +607,42 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("zrank")) {
+    if (commands.get(0).equalsIgnoreCase("zrange")) {
+      String key = commands.get(1);
+      int start = Integer.parseInt(commands.get(2));
+      int end = Integer.parseInt(commands.get(2));
+      List<String> members = new ArrayList<>();
+      if (!scores.containsKey(key)) {
+        out.write("*0\r\n".getBytes());
+        return;
+      }
+      for (Map.Entry<Double, TreeSet<String>> it : scores.get(key).entrySet()) {
+        for (String member : it.getValue()) {
+          members.add(member);
+        }
+      }
+      if (start >= members.size() || start > end) {
+        out.write("*0\r\n".getBytes());
+        return;
+      }
+      end = Math.min(end, members.size() - 1);
+      List<String> response = new ArrayList<>();
+      for (int i = start; i <= end; i++) {
+        response.add(members.get(i));
+      }
+      StringBuilder sb = new StringBuilder();
+      sb.append("");
+      sb.append(response.size());
+      sb.append("\r\n");
+      for (String resp : response) {
+        sb.append("$");
+        sb.append(resp.length());
+        sb.append("\r\n");
+        sb.append(resp);
+        sb.append("\r\n");
+      }
+      out.write(sb.toString().getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("zrank")) {
       String key = commands.get(1);
       String memeber = commands.get(2);
       if (!scores.containsKey(key)) {
