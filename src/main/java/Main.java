@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,13 +69,16 @@ public class Main {
   }
 
   static String hexConverter(List<String> hex) {
-    StringBuilder sb = new StringBuilder();
-    for (String str : hex) {
-      sb.append(str);
-    }
-    byte[] key = HexFormat.of().parseHex(sb.toString());
+    String joined = String.join("", hex);
+    byte[] key = HexFormat.of().parseHex(joined);
     String s = new String(key, StandardCharsets.UTF_8);
     return s;
+  }
+
+  static long hexLeToLong(List<String> hex) {
+    String joined = String.join("", hex);
+    byte[] b = HexFormat.of().parseHex(joined);
+    return ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).getLong();
   }
 
   public static void main(String[] args) throws IOException {
@@ -223,7 +228,7 @@ public class Main {
             input.add(sb.toString());
             sb.setLength(0);
           }
-          System.out.println(hexConverter(List.of("00", "0c", "28", "8a", "c7", "01", "00", "00")));
+          System.out.println(hexLeToLong(List.of("00", "0c", "28", "8a", "c7", "01", "00", "00")));
         }
       }
     }
