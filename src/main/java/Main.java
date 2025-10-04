@@ -74,7 +74,7 @@ public class Main {
       servers.put(port, serverSocket);
     }
     serverSocket.setReuseAddress(true);
-    if (args.length > 2 && args[2].equals("--replicaof")) {
+    if (args.length > 2) {
       if (args[2].equals("--replicaof")) {
         master = Integer.parseInt(args[3].split(" ")[1]);
         new Thread(
