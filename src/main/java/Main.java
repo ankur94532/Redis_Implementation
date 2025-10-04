@@ -612,10 +612,10 @@ public class Main {
       String member = commands.get(3);
       scores.putIfAbsent(key, new TreeMap<>());
       scores.get(key).putIfAbsent(score, new ArrayList<>());
-      int present = 0;
+      int present = 1;
       for (Map.Entry<Double, List<String>> it : scores.get(key).entrySet()) {
         if (it.getValue().contains(member)) {
-          present = 1;
+          present = 0;
         }
       }
       scores.get(key).get(score).add(member);
