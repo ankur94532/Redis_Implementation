@@ -599,6 +599,10 @@ public class Main {
         out.write(data.getBytes());
         return;
       }
+      if (commands.get(0).equalsIgnoreCase("PING")) {
+        out.write(("*2\r\n$4\r\npong\r\n$0\r\n\r\n").getBytes());
+        return;
+      }
     }
     if (commands.get(0).equalsIgnoreCase("subscribe")) {
       Set<String> channels = subscibed.getOrDefault(client, new HashSet<>());
