@@ -203,6 +203,7 @@ public class Main {
           configInfo.put(key, value);
         }
         dbFile = checkDirAndFile(args[1], args[3]);
+        boolean commandStart = false;
         if (dbFile != null) {
           byte[] data = Files.readAllBytes(dbFile.toPath());
           for (int i = 0; i < data.length; i++) {
@@ -211,6 +212,9 @@ public class Main {
           StringBuilder sb = new StringBuilder();
           List<String> commands = new ArrayList<>();
           for (int i = 0; i < data.length; i++) {
+            if (data[i] < 0 && commands.size() > 0) {
+              break;
+            }
             if (data[i] >= 48 && data[i] <= 57) {
               sb.append((char) data[i]);
             } else if (data[i] >= 65 && data[i] <= 90) {
@@ -221,8 +225,11 @@ public class Main {
               sb.append((char) data[i]);
             } else {
               if (sb.length() > 0) {
-                if (!sb.toString().equals("redis-bits")) {
+                if (commandStart) {
                   commands.add(sb.toString());
+                }
+                if (!sb.toString().equals("redis-bits")) {
+                  commandStart = true;
                 }
                 sb.setLength(0);
               }
