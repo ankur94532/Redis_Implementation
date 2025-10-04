@@ -228,7 +228,7 @@ public class Main {
             input.add(sb.toString());
             sb.setLength(0);
           }
-          System.out.println(hexLeToLong(List.of("00", "0c", "28", "8a", "c7", "01", "00", "00")));
+          System.out.println(hexLeToLong(List.of("09")));
         }
       }
     }
