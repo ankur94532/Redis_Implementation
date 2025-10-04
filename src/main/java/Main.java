@@ -699,6 +699,7 @@ public class Main {
       int present = 1;
       for (Map.Entry<Double, TreeSet<String>> it : scores.get(key).entrySet()) {
         if (it.getValue().contains(member)) {
+          scores.get(key).get(it.getKey()).remove(member);
           present = 0;
         }
       }
