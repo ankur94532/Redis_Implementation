@@ -194,10 +194,9 @@ public class Main {
             .start();
       } else {
         dbFile = checkDirAndFile(args[1], args[3]);
-        try (java.io.BufferedReader br = Files.newBufferedReader(dbFile.toPath(), StandardCharsets.UTF_8)) {
-          for (String line; (line = br.readLine()) != null;) {
-            System.out.println(line);
-          }
+        byte[] data = Files.readAllBytes(dbFile.toPath());
+        for (int i = 0; i < data.length; i++) {
+          System.out.println(data[i]);
         }
       }
     }
