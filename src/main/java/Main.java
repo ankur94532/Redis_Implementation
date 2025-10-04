@@ -231,6 +231,7 @@ public class Main {
             input.add(sb.toString());
             sb.setLength(0);
           }
+          System.out.println(hexConverter(List.of("0a")));
           for (int i = 0; i < input.size();) {
             if (input.get(i).equals("ff")) {
               break;
