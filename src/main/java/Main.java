@@ -604,7 +604,16 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("subscribe")) {
+    if (commands.get(0).equalsIgnoreCase("publish")) {
+      String channel = commands.get(1);
+      int count = 0;
+      for (Map.Entry<Socket, Set<String>> entry : subscibed.entrySet()) {
+        if (entry.getValue().contains(channel)) {
+          count++;
+        }
+      }
+      out.write((":" + count + "\r\n").getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("subscribe")) {
       Set<String> channels = subscibed.getOrDefault(client, new HashSet<>());
       channels.add(commands.get(1));
       subscibed.put(client, channels);
