@@ -245,7 +245,7 @@ public class Main {
               Instant expiry = hexLeToInstant(time);
               System.out.println(expiry);
               int len = input.get(i).charAt(1);
-              System.out.println(len);
+              System.out.println(input.get(i) + " " + len);
               i++;
               time.clear();
               for (int j = i; j < i + len; j++) {
