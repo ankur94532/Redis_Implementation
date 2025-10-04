@@ -247,8 +247,6 @@ public class Main {
           configInfo.put(key, value);
         }
         dbFile = checkDirAndFile(args[1], args[3]);
-        System.out.println(decodeRdbLenHex("0a"));
-        System.out.println(decodeRdbLenHex("40 40"));
         if (dbFile != null) {
           byte[] data = Files.readAllBytes(dbFile.toPath());
           String allHex = HexFormat.of().formatHex(data); // continuous hex
@@ -334,7 +332,7 @@ public class Main {
               String value = hexConverter(time);
               Key entry = new Key(value, expiry);
               entries.put(key, entry);
-              System.out.println(key + " " + value);
+              System.out.println(key + " " + value + " " + expiry);
               continue;
             }
             i++;
