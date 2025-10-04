@@ -205,15 +205,14 @@ public class Main {
         boolean commandStart = false;
         if (dbFile != null) {
           byte[] data = Files.readAllBytes(dbFile.toPath());
-          /*
-           * for (int i = 0; i < data.length; i++) {
-           * System.out.println(data[i]);
-           * }
-           */
+
+          for (int i = 0; i < data.length; i++) {
+            System.out.println((char) data[i]);
+          }
+
           StringBuilder sb = new StringBuilder();
           List<String> commands = new ArrayList<>();
           for (int i = 0; i < data.length; i++) {
-            System.out.println(sb.toString() + " " + commandStart);
             if (data[i] < 0 && commands.size() > 0) {
               if (sb.length() > 0) {
                 commands.add(sb.toString());
