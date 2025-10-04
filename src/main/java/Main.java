@@ -248,6 +248,7 @@ public class Main {
         }
         dbFile = checkDirAndFile(args[1], args[3]);
         if (dbFile != null) {
+          System.out.println("file present here");
           byte[] data = Files.readAllBytes(dbFile.toPath());
           String allHex = HexFormat.of().formatHex(data); // continuous hex
           List<String> input = new ArrayList<>();
