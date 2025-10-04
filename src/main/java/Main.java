@@ -607,7 +607,7 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equals("zrank")) {
+    if (commands.get(0).equalsIgnoreCase("zrank")) {
       String key = commands.get(1);
       String memeber = commands.get(2);
       if (!scores.containsKey(key)) {
