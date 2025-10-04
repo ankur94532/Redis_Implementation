@@ -626,7 +626,7 @@ public class Main {
         return;
       }
       System.out.println(members.size());
-      start = Math.max(start, members.size());
+      start = Math.max(start, -members.size());
       while (start < 0) {
         start = (start + members.size()) % members.size();
       }
