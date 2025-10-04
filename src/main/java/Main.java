@@ -592,9 +592,9 @@ public class Main {
 
     OutputStream out = client.getOutputStream();
     if (subscibed.containsKey(client)) {
-      if (!commands.get(1).equalsIgnoreCase("SUBSCRIBE") && !commands.get(1).equalsIgnoreCase("UNSUBSCRIBE")
-          && !commands.get(1).equalsIgnoreCase("PING") && !commands.get(1).equalsIgnoreCase("QUIT")
-          && !commands.get(1).equalsIgnoreCase("RESET")) {
+      if (!commands.get(0).equalsIgnoreCase("SUBSCRIBE") && !commands.get(0).equalsIgnoreCase("UNSUBSCRIBE")
+          && !commands.get(0).equalsIgnoreCase("PING") && !commands.get(0).equalsIgnoreCase("QUIT")
+          && !commands.get(0).equalsIgnoreCase("RESET")) {
         String data = "-ERR Can't execute '" + commands.get(0).toLowerCase() + "' in subscribed mode" + "\r\n";
         out.write(data.getBytes());
         return;
