@@ -84,6 +84,33 @@ public class Main {
     return Instant.ofEpochMilli(ms);
   }
 
+  static int decodeRdbLenHex(String hexBytes) {
+    String[] p = hexBytes.trim().split("\\s+");
+    if (p.length == 0 || p[0].isEmpty())
+      throw new IllegalArgumentException("no bytes");
+    int b0 = Integer.parseInt(p[0], 16) & 0xFF;
+    int top = (b0 & 0xC0) >>> 6;
+
+    if (top == 0b00) { // 1 byte (0..63)
+      return b0 & 0x3F;
+    } else if (top == 0b01) { // 2 bytes (64..16383)
+      if (p.length < 2)
+        throw new IllegalArgumentException("need 2 bytes");
+      int b1 = Integer.parseInt(p[1], 16) & 0xFF;
+      return ((b0 & 0x3F) << 8) | b1; // big-endian across the two
+    } else if (top == 0b10) { // 5 bytes (>=16384)
+      if (p.length < 5)
+        throw new IllegalArgumentException("need 5 bytes");
+      int b1 = Integer.parseInt(p[1], 16) & 0xFF;
+      int b2 = Integer.parseInt(p[2], 16) & 0xFF;
+      int b3 = Integer.parseInt(p[3], 16) & 0xFF;
+      int b4 = Integer.parseInt(p[4], 16) & 0xFF;
+      return (b1 << 24) | (b2 << 16) | (b3 << 8) | b4; // 32-bit BE
+    } else { // 0b11 => special string encoding (INT8/16/32 or LZF), not a raw length
+      throw new IllegalArgumentException("special-encoded string, not a raw length");
+    }
+  }
+
   public static void main(String[] args) throws IOException {
     System.out.println("Logs from your program will appear here!");
     if (args.length > 0 && args[0].equals("--port")) {
@@ -231,7 +258,6 @@ public class Main {
             input.add(sb.toString());
             sb.setLength(0);
           }
-          System.out.println(hexConverter(List.of("0a")));
           for (int i = 0; i < input.size();) {
             if (input.get(i).equals("ff")) {
               break;
@@ -245,16 +271,59 @@ public class Main {
               i += 9;
               Instant expiry = hexLeToInstant(time);
               System.out.println(expiry);
-              int len = input.get(i).charAt(1) - 48;
-              i++;
+              int len = 0;
+              if (input.get(i).charAt(0) == '0') {
+                len = decodeRdbLenHex(input.get(i));
+                i++;
+              } else if (input.get(i).charAt(0) == '4') {
+                StringBuilder sbLen = new StringBuilder();
+                sbLen.append(input.get(i));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 1));
+                len = decodeRdbLenHex(sb.toString());
+                i += 2;
+              } else {
+                StringBuilder sbLen = new StringBuilder();
+                sbLen.append(input.get(i));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 1));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 2));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 3));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 3));
+                i += 5;
+              }
               time.clear();
               for (int j = i; j < i + len; j++) {
                 time.add(input.get(j));
               }
               String key = hexConverter(time);
               i += len;
-              len = input.get(i).charAt(1) - 48;
-              i++;
+              if (input.get(i).charAt(0) == '0') {
+                len = decodeRdbLenHex(input.get(i));
+                i++;
+              } else if (input.get(i).charAt(0) == '4') {
+                StringBuilder sbLen = new StringBuilder();
+                sbLen.append(input.get(i));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 1));
+                len = decodeRdbLenHex(sb.toString());
+                i += 2;
+              } else {
+                StringBuilder sbLen = new StringBuilder();
+                sbLen.append(input.get(i));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 1));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 2));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 3));
+                sbLen.append(" ");
+                sbLen.append(input.get(i + 3));
+                i += 5;
+              }
               time.clear();
               for (int j = i; j < i + len; j++) {
                 time.add(input.get(j));
