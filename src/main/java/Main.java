@@ -595,7 +595,7 @@ public class Main {
       if (!commands.get(1).equalsIgnoreCase("SUBSCRIBE") && !commands.get(1).equalsIgnoreCase("UNSUBSCRIBE")
           && !commands.get(1).equalsIgnoreCase("PING") && !commands.get(1).equalsIgnoreCase("QUIT")
           && !commands.get(1).equalsIgnoreCase("RESET")) {
-        String data = "-ERR Can't execute " + commands.get(0) + " in subscribed mode" + "\r\n";
+        String data = "-ERR Can't execute " + commands.get(0).toLowerCase() + " in subscribed mode" + "\r\n";
         out.write(data.getBytes());
         return;
       }
