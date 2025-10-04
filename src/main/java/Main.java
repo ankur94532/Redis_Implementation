@@ -631,7 +631,7 @@ public class Main {
         response.add(members.get(i));
       }
       StringBuilder sb = new StringBuilder();
-      sb.append("");
+      sb.append("*");
       sb.append(response.size());
       sb.append("\r\n");
       for (String resp : response) {
