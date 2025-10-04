@@ -230,7 +230,7 @@ public class Main {
               sb.append((char) data[i]);
             } else {
               if (sb.length() > 0) {
-                if (commandStart) {
+                if (commandStart == true) {
                   commands.add(sb.toString());
                 }
                 if (sb.toString().equals("redis-bits")) {
