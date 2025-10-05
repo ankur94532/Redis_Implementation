@@ -610,7 +610,7 @@ public class Main {
     if (commands.get(0).equalsIgnoreCase("geoadd")) {
       double longitude = Double.parseDouble(commands.get(2));
       double latitude = Double.parseDouble(commands.get(3));
-      if (longitude < -180 || longitude > 180 || latitude < -180 || latitude > 180) {
+      if (longitude < -180 || longitude > 180 || latitude < -85.05112878 || latitude > 85.05112878) {
         out.write(("-ERR invalid longitude,latitude pair " + longitude + "," + latitude + "\r\n").getBytes());
       } else {
         Double score = 0.0;
