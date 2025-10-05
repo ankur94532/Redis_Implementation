@@ -663,6 +663,17 @@ public class Main {
     return 0; // timeout/no ACK
   }
 
+  public static double distanceMeters(double lon1, double lat1, double lon2, double lat2) {
+    double lat1r = Math.toRadians(lat1);
+    double lon1r = Math.toRadians(lon1);
+    double lat2r = Math.toRadians(lat2);
+    double lon2r = Math.toRadians(lon2);
+    double u = Math.sin((lat2r - lat1r) / 2.0);
+    double v = Math.sin((lon2r - lon1r) / 2.0);
+    return 2.0 * 6372797.560856 *
+        Math.asin(Math.sqrt(u * u + Math.cos(lat1r) * Math.cos(lat2r) * v * v));
+  }
+
   static void execute(List<String> commands, Socket client, boolean isMaster, int used)
       throws IOException, InterruptedException {
 
@@ -689,7 +700,28 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("geopos")) {
+    if (commands.get(0).equalsIgnoreCase("geodist")) {
+      String key = commands.get(1);
+      double log1 = 0.0, lat1 = 0.0, log2 = 0.0, lat2 = 0.0;
+      String loc1 = commands.get(2);
+      String loc2 = commands.get(3);
+      for (Map.Entry<Double, TreeSet<String>> entry : scores.get(key).entrySet()) {
+        if (entry.getValue().contains(loc1)) {
+          double score = entry.getKey();
+          Coordinates coordinate = decode((long) score);
+          log1 = coordinate.longitude;
+          lat1 = coordinate.latitude;
+        }
+        if (entry.getValue().contains(loc2)) {
+          double score = entry.getKey();
+          Coordinates coordinate = decode((long) score);
+          log2 = coordinate.longitude;
+          lat2 = coordinate.latitude;
+        }
+      }
+      String dist = Double.toString(distanceMeters(log1, lat1, log2, lat2));
+      out.write(("$" + dist.length() + "\r\n" + dist + "\r\n").getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("geopos")) {
       List<String> locations = new ArrayList<>();
       String key = commands.get(1);
       for (int i = 2; i < commands.size(); i++) {
