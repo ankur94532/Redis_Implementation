@@ -59,6 +59,13 @@ public class Main {
   static File dbFile;
   static Map<Socket, Set<String>> subscibed = new HashMap<>();
   static Map<String, TreeMap<Double, TreeSet<String>>> scores = new HashMap<>();
+  static final double MIN_LATITUDE = -85.05112878;
+  static final double MAX_LATITUDE = 85.05112878;
+  static final double MIN_LONGITUDE = -180.0;
+  static final double MAX_LONGITUDE = 180.0;
+
+  static final double LATITUDE_RANGE = MAX_LATITUDE - MIN_LATITUDE;
+  static final double LONGITUDE_RANGE = MAX_LONGITUDE - MIN_LONGITUDE;
 
   static final class Waiter {
     final Socket client;
@@ -70,6 +77,35 @@ public class Main {
       this.out = o;
       this.key = k;
     }
+  }
+
+  private static long spreadInt32ToInt64(int v) {
+    long result = v & 0xFFFFFFFFL;
+    result = (result | (result << 16)) & 0x0000FFFF0000FFFFL;
+    result = (result | (result << 8)) & 0x00FF00FF00FF00FFL;
+    result = (result | (result << 4)) & 0x0F0F0F0F0F0F0F0FL;
+    result = (result | (result << 2)) & 0x3333333333333333L;
+    result = (result | (result << 1)) & 0x5555555555555555L;
+    return result;
+  }
+
+  private static long interleave(int x, int y) {
+    long xSpread = spreadInt32ToInt64(x);
+    long ySpread = spreadInt32ToInt64(y);
+    long yShifted = ySpread << 1;
+    return xSpread | yShifted;
+  }
+
+  public static long encode(double longitude, double latitude) {
+    // Normalize to the range 0-2^26
+    double normalizedLatitude = Math.pow(2, 26) * (latitude - MIN_LATITUDE) / LATITUDE_RANGE;
+    double normalizedLongitude = Math.pow(2, 26) * (longitude - MIN_LONGITUDE) / LONGITUDE_RANGE;
+
+    // Truncate to integers
+    int latInt = (int) normalizedLatitude;
+    int lonInt = (int) normalizedLongitude;
+
+    return interleave(latInt, lonInt);
   }
 
   static String hexConverter(List<String> hex) {
@@ -613,7 +649,7 @@ public class Main {
       if (longitude < -180 || longitude > 180 || latitude < -85.05112878 || latitude > 85.05112878) {
         out.write(("-ERR invalid longitude,latitude pair " + longitude + "," + latitude + "\r\n").getBytes());
       } else {
-        Double score = 0.0;
+        double score = encode(longitude, latitude);
         scores.putIfAbsent(commands.get(1), new TreeMap<>());
         scores.get(commands.get(1)).putIfAbsent(score, new TreeSet<>());
         scores.get(commands.get(1)).get(score).add(commands.get(4));
