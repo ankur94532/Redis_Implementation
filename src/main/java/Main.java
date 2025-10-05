@@ -79,6 +79,52 @@ public class Main {
     }
   }
 
+  static class Coordinates {
+    double latitude;
+    double longitude;
+
+    Coordinates(double latitude, double longitude) {
+      this.latitude = latitude;
+      this.longitude = longitude;
+    }
+  }
+
+  private static int compactInt64ToInt32(long v) {
+    v = v & 0x5555555555555555L;
+    v = (v | (v >> 1)) & 0x3333333333333333L;
+    v = (v | (v >> 2)) & 0x0F0F0F0F0F0F0F0FL;
+    v = (v | (v >> 4)) & 0x00FF00FF00FF00FFL;
+    v = (v | (v >> 8)) & 0x0000FFFF0000FFFFL;
+    v = (v | (v >> 16)) & 0x00000000FFFFFFFFL;
+    return (int) v;
+  }
+
+  private static Coordinates convertGridNumbersToCoordinates(int gridLatitudeNumber, int gridLongitudeNumber) {
+    // Calculate the grid boundaries
+    double gridLatitudeMin = MIN_LATITUDE + LATITUDE_RANGE * (gridLatitudeNumber / Math.pow(2, 26));
+    double gridLatitudeMax = MIN_LATITUDE + LATITUDE_RANGE * ((gridLatitudeNumber + 1) / Math.pow(2, 26));
+    double gridLongitudeMin = MIN_LONGITUDE + LONGITUDE_RANGE * (gridLongitudeNumber / Math.pow(2, 26));
+    double gridLongitudeMax = MIN_LONGITUDE + LONGITUDE_RANGE * ((gridLongitudeNumber + 1) / Math.pow(2, 26));
+
+    // Calculate the center point of the grid cell
+    double latitude = (gridLatitudeMin + gridLatitudeMax) / 2;
+    double longitude = (gridLongitudeMin + gridLongitudeMax) / 2;
+
+    return new Coordinates(latitude, longitude);
+  }
+
+  public static Coordinates decode(long geoCode) {
+    // Align bits of both latitude and longitude to take even-numbered position
+    long y = geoCode >> 1;
+    long x = geoCode;
+
+    // Compact bits back to 32-bit ints
+    int gridLatitudeNumber = compactInt64ToInt32(x);
+    int gridLongitudeNumber = compactInt64ToInt32(y);
+
+    return convertGridNumbersToCoordinates(gridLatitudeNumber, gridLongitudeNumber);
+  }
+
   private static long spreadInt32ToInt64(int v) {
     long result = v & 0xFFFFFFFFL;
     result = (result | (result << 16)) & 0x0000FFFF0000FFFFL;
@@ -643,7 +689,37 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("geoadd")) {
+    if (commands.get(0).equalsIgnoreCase("geopos")) {
+      List<String> locations = new ArrayList<>();
+      String key = commands.get(1);
+      for (int i = 2; i < commands.size(); i++) {
+        locations.add(commands.get(i));
+      }
+      String data = "*" + locations.size() + "\r\n";
+      for (String loc : locations) {
+        if (!scores.containsKey(key)) {
+          data += "*-1\r\n";
+          continue;
+        }
+        String log = "", lat = "";
+        for (Map.Entry<Double, TreeSet<String>> entry : scores.get(key).entrySet()) {
+          if (entry.getValue().contains(loc)) {
+            double score = entry.getKey();
+            Coordinates coordinate = decode((long) score);
+            log = Double.toString(coordinate.longitude);
+            lat = Double.toString(coordinate.latitude);
+          }
+        }
+        if (!log.isEmpty()) {
+          data += "*-1\r\n";
+        } else {
+          data += "*2\r\n";
+          data += "$" + log.length() + "\r\n" + log + "\r\n";
+          data += "$" + lat.length() + "\r\n" + lat + "\r\n";
+        }
+      }
+      out.write(data.getBytes());
+    } else if (commands.get(0).equalsIgnoreCase("geoadd")) {
       double longitude = Double.parseDouble(commands.get(2));
       double latitude = Double.parseDouble(commands.get(3));
       if (longitude < -180 || longitude > 180 || latitude < -85.05112878 || latitude > 85.05112878) {
