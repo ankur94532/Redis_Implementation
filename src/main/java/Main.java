@@ -613,7 +613,7 @@ public class Main {
       if (longitude < -180 || longitude > 180 || latitude < -180 || latitude > 180) {
         out.write(("-ERR invalid longitude,latitude pair " + longitude + "," + latitude + "\r\n").getBytes());
       } else {
-        out.write(":1\r\n".getBytes());
+        out.write(":0\r\n".getBytes());
       }
     } else if (commands.get(0).equalsIgnoreCase("zrem")) {
       String key = commands.get(1);
