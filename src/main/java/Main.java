@@ -710,7 +710,7 @@ public class Main {
             lat = Double.toString(coordinate.latitude);
           }
         }
-        if (!log.isEmpty()) {
+        if (log.isEmpty()) {
           data += "*-1\r\n";
         } else {
           data += "*2\r\n";
