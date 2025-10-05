@@ -700,7 +700,24 @@ public class Main {
         return;
       }
     }
-    if (commands.get(0).equalsIgnoreCase("geodist")) {
+    if (commands.get(0).equalsIgnoreCase("geosearch")) {
+      String key = commands.get(1);
+      double log = Double.parseDouble(commands.get(3));
+      double lat = Double.parseDouble(commands.get(4));
+      List<String> response = new ArrayList<>();
+      double dist = Double.parseDouble(commands.get(6));
+      for (Map.Entry<Double, TreeSet<String>> entry : scores.get(key).entrySet()) {
+        double score = entry.getKey();
+        Coordinates coordinates = decode((long) score);
+        double distance = distanceMeters(log, lat, coordinates.longitude, coordinates.latitude);
+        if (distance < dist) {
+          for (String loc : entry.getValue()) {
+            response.add(loc);
+          }
+        }
+      }
+      respArray(out, response);
+    } else if (commands.get(0).equalsIgnoreCase("geodist")) {
       String key = commands.get(1);
       double log1 = 0.0, lat1 = 0.0, log2 = 0.0, lat2 = 0.0;
       String loc1 = commands.get(2);
