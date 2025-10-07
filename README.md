@@ -439,6 +439,7 @@ List mutations are included in the replication stream.
 
 
 Limits / next
+
 Time complexity is O(total number of locations) for trying to find the list of locations within a certain radius, the official redis implementation uses a Time Complexity of O(n+log(m)) here n is the size of list of probable locations
 
 No right-side ops (RPOP/BRPOP), no multi-key BLPOP, no RPOPLPUSH/LMOVE.
